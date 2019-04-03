@@ -23,20 +23,24 @@
       (loop for item in set
 	 collect (append (list item) (permutate set (- length 1))))))
 
-;; Merge first element of every sublist, then create all possibilities using final sublist
-;; example:
-;; folds = length - 1 then perform special final fold
-;; (A (A (A) (B) (C))) - (one fold)-V
-;; ((A A) (A) (B) (C)) - (final fold)-V
-;; ((A A A) (A A B) (A A C)) - result
+;; Merge first element with every sublist
+;; Original list: '(A (A (A B) (B B) (C B)) (B (A B) (B B) (C B))))
+;; fold 1 :    X   = A
+;;             LS  = ((B (A B) (B B) (C B)))
+;;             ACC = ((A A (A B) (B B) (C B)))
+;; fold 2 :    X   = A
+;;             LS  = NIL
+;;             ACC = ((A A (A B) (B B) (C B)) (A B (A B) (B B) (C B)))
 (defun fold (ls)
   (labels
       ((aux (x ls acc)
   	 ;(break)
   	 (cond
   	   ((endp ls) acc)
-	 (T (aux x (rest ls) (append acc (list (cons  x (first ls)))))))))
-  (aux (first ls) (rest ls) '())))
+	   (T (aux x (rest ls) (append acc (list (cons  x (first ls)))))))))
+    (aux (first ls) (rest ls) '())))
+
+
 
 (defun baseline-1-MoonlightPinkFlamingoes (board colors SCSA last-response)
   (declare (ignore SCSA))
