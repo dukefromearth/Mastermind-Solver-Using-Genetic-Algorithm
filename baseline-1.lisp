@@ -3,6 +3,9 @@
 ;; Description:  Baseline-1 agent creates a set of all possible combinations of
 ;;               specified colors of size board.
 
+;; The agent will need some form of memory
+(defvar *previous-guess* nil)
+
 ;; Function performs the special condition final fold needed to create a usable possibility set.
 ;; Essentially map folded segment over final subset
 (defun final-fold (set)
@@ -48,7 +51,10 @@
     (setf possible (loop for item in possible append (final-fold item)))
 
     ;; Remove already used guesses from the front of list
-    (setf possible (remove last-response (member last-response possible)))
+    (setf possible (remove last-response (member *previous-guess* possible)))
 
+    ;; Store guess in gobal variable so it retains the information out of scope
+    (setf *previous-guess* (first possible))
+    
     ;; finally return next guess in lexographical order:
     (first possible)))
