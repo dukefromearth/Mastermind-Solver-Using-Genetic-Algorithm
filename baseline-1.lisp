@@ -51,7 +51,7 @@
     (setf possible (loop for item in possible append (final-fold item)))
 
     ;; Remove already used guesses from the front of list
-    (setf possible (remove last-response (member *previous-guess* possible)))
+    (setf possible (remove *previous-guess* (member *previous-guess* possible)))
 
     ;; Store guess in gobal variable so it retains the information out of scope
     (setf *previous-guess* (first possible))
