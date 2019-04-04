@@ -38,7 +38,7 @@
 ;;             LS  = NIL
 ;;             ACC = ((A A (A B) (B B) (C B)) (A B (A B) (B B) (C B)))
 (defun fold (ls)
-  (declare (notinline fold))
+  ;(declare (notinline fold))
   (labels
       ((aux (x ls acc)
   	 ;(break)
