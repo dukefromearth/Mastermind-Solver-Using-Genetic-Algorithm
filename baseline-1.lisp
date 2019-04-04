@@ -68,11 +68,12 @@
     (setf possible *all-possible-codes*)
     
     ;; Remove already used guesses from the front of list
+
     (if (not (null (member *previous-guess* *all-possible-codes*)))
-	(setf possible (rest (member *previous-guess* *all-possible-codes*))))
-    
+	      (setf possible (rest (member *previous-guess* *all-possible-codes*))))
+
     ;; Store guess in gobal variable so it retains the information out of scope
     (setf *previous-guess* (first possible))
-    (print *previous-guess*)
+    ;(print *previous-guess*)
     ;; finally return next guess in lexographical order:
     (first possible)))
