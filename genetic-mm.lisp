@@ -29,7 +29,7 @@
 ;;     12. h = h + 1;
 ;;   end while
 ;;   13. Play guess gi element of (E hat i);
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MAIN AGENY ROUTINE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MAIN AGENT ROUTINE
 ;;   14. Get response Xi (bulls) Yi (cows)
 ;; end while
 
