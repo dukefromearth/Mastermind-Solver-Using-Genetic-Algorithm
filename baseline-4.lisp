@@ -34,7 +34,7 @@
   (loop for sublist in *inferences*
      ;; Loop through inferences until found, otherwise nill
      when (and (member pos (second sublist)) (= (length (second sublist)) 1))
-     return (first sublist))))
+     return (first sublist)))
 
 ;;   Nextpos(i): positions; Returns the next possible position for color i. That is if i = 3
 ;;                          and the corresponding sublist is (3 (2 4 5)) then it returns 2.
@@ -44,12 +44,11 @@
      return (first (second sublist))))
        
 ;; Secondunfixed : colors, Returns the second color which is not yet fixed
-;; UNTESTED
 (defun secondunfixed ()
   (loop for sublist in *inferences*
      when (> (length (second sublist)) 1)
      collect (first sublist) into unfixed
-       finally (return (second unfixed))))
+     finally (return (second unfixed))))
 
 ;;;;
 ;;;; UPDATE algorithm updates knowledge base
@@ -125,7 +124,6 @@
 ;;   Fix1(i j); fixes the color i in the current position of the color j. In the above example, if i=3 and j=2,
 ;;              then the color 3 gets tied to Position 3, its sublist becomes (3 (3)), and the positon 3 gets
 ;;              deleted from the other sublists
-;; UNTESTED
 (defun fix1 (i j)
   (let ((position-to-remove (nextpos j)))
     (loop for sublist in *inferences*
@@ -133,7 +131,7 @@
        do (setf (second sublist) (list position-to-remove)))
     (loop for sublist in *inferences*
        when (not (equal (first sublist) i))
-       do (setf (second sublist) (remove position-to-remove (second sublist))))))))
+       do (setf (second sublist) (remove position-to-remove (second sublist))))))
 
 ;;   Cleanup(inferences); cleans up the inferences list. For example, if inferences was:
 ;;                        ((2 (3))
@@ -152,20 +150,19 @@
      do (loop for sublist2 in (remove sublist *inferences*)
 	   do (setf (second sublist2) (remove (first (second sublist)) (second sublist2))))))
 
-;;   Nextcolor(beingconsidered): Gets a new color for beingconsidered. If all the five colors have already
-;;                               been detected then beingconsidered is simply set to zero
-;; UNTESTED
-(defun nextcolor (beingconsidered colors)
+;;   Nextcolor(): Gets a new color for beingconsidered. If all the five colors have already
+;;                been detected then beingconsidered is simply set to zero
+(defun nextcolor (colors)
   (loop for sublist in *inferences*
-     do (setf colors (remove (first sublist) colors)
-	      finally (return (first colors)))))
+     do (setf colors (remove (first sublist) colors))
+     finally (return (first colors))))
 
 ;;   Numfix returns the number of positions tied to a color
 (defun numfix ()
   (loop for sublist in *inferences*
      when (= (length (second sublist)) 1)
      collect fixed
-       finally (return (length fixed)))
+       finally (return (length fixed))))
 
 ;; Main routine function
 (defun baseline-4-MoonlightPinkFlamingoes (board colors SCSA last-response)
