@@ -10,13 +10,31 @@
 ;; Previous guess
 (defvar *trial*)
 
-;; Getnext Algorithm constructs the next trial arrangement
-(defun getnext ()
-  (loop for i in *trial*
-       (cond ((tied i) (setf i (itscolor i)))
- 	     ((= i (nextpos beingfixed)) (setf i 'beingfixed))
- 	     ((= (length *inferences*) (length trial)) (setf i (secondunfixed *inferences*)))
- 	     (t (setf i 'beingconsidered)))))
+;;;;
+;;;; GETNEXT Algorithm constructs the next trial arrangement
+;;;;
+;;;  Psuedo code
+;; Begin
+;;  For i := 1 to N do ;; N is board
+;;  Case
+;;   Tied(i)
+;;    : gi := itscolor (i)
+;;   (i = nextpos(beingfixed))  ;; position i in guess is the next position being fixed
+;;    : gi := beingfixed
+;;   (Length(inferences) = N)
+;;    : gi = secondunfixed(inferences);
+;;   else
+;;    : gi = beingconsidered
+;;  end
+;; end 
+
+;;; Implementation ( below currently not working/not correct in transfering from psuedocode to actual code)
+;; (defun getnext ()
+;;   (loop for i in *trial*
+;;        (cond ((tied i) (setf i (itscolor i)))
+;;  	     ((= i (nextpos beingfixed)) (setf i 'beingfixed))
+;;  	     ((= (length *inferences*) (length trial)) (setf i (secondunfixed *inferences*)))
+;;  	     (t (setf i 'beingconsidered)))))
 
 ;;;;
 ;;;; GETNEXT helpers
@@ -53,22 +71,56 @@
 ;;;;
 ;;;; UPDATE algorithm updates knowledge base
 ;;;;
-(defun update (last-response gain colors)
-  (if (= beingfixed 0)
-      (setf gain (- (+ (first last-response) (second last-response)) (numfix) 1))
-      (setf gain (- (+ (first last-response) (second last-response)) (numfix))))
-  (case cows
-    (0 (progn
-	 (fix beingfixed)
-	 (bump beingfixed)))
-    (1 (progn
-	 (if () ; beingfixed <> 0
-	     (del beingfixed beingconsidered))
-	 (del beingfixed beingconsidered)))
-    (2 (fix1 beingconsidered beingfixed))
-    (otherwise (report-error-update)))
-  (cleanup *inferences*)
-  (nextcolor beingconsidered colors))
+;;; Pseudocode
+;; Begin
+;;  if beingfixed = 0
+;;  then gain := (bulls + cows)
+;;   - numfix(inferences) - 1
+;;  else gain := (bulls + cows)
+;;   - Numfix (inferences);
+;;  case
+;;   cows = 0
+;;    : Begin
+;;     (* being fixed is OK in current position *)
+;;     Fix(beingfixed)
+;;     Bump(beingfixed)
+;;    end;
+;;   cows = 1
+;;    : Begin
+;;    (*beingfixed is not OK in current position*)
+;;    (*beingconsidered is not OK in current position*)
+;;    (*of beingfixed*)
+;;    if (beingfixed <> 0)
+;;     then Del(beingfixed, beingconsidered);
+;;    Del(beingfixed, beingfixed);
+;;   end;
+;;  cows = 2
+;;   : Fix1(beingconsidered, beingfixed);
+;;  else
+;;   : Reporterror;
+;;  end; (*inferences);
+;;  cleanup(inferences);
+;;  Nextcolor(beingconsidered);
+;; end; (*Update*)
+
+
+;;; Implementation of update may not be correct/properly translated from psuedocode
+;; (defun update (last-response gain colors)
+;;   (if (= beingfixed 0)
+;;       (setf gain (- (+ (first last-response) (second last-response)) (numfix) 1))
+;;       (setf gain (- (+ (first last-response) (second last-response)) (numfix))))
+;;   (case cows
+;;     (0 (progn
+;; 	 (fix beingfixed)
+;; 	 (bump beingfixed)))
+;;     (1 (progn
+;; 	 (if () ; beingfixed <> 0
+;; 	     (del beingfixed beingconsidered))
+;; 	 (del beingfixed beingconsidered)))
+;;     (2 (fix1 beingconsidered beingfixed))
+;;     (otherwise (report-error-update)))
+;;   (cleanup *inferences*)
+;;   (nextcolor beingconsidered colors))
 
 ;;;;
 ;;;; UPDATE HELPERS 
