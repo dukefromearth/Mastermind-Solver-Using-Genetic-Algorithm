@@ -96,7 +96,7 @@
 	  (setf (second (first *guesses*)) (third last-response))
 	  
 	  ;; Generate initial population
-	  (setf population (initialize-population population-size))
+	  (setf population (initialize-population population-size colors board))
 
 	  ;; Calculate value, TBD, for now rely on game to give fitness 
 	  
