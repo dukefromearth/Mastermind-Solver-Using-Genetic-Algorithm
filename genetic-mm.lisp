@@ -29,49 +29,98 @@
 ;;     12. h = h + 1;
 ;;   end while
 ;;   13. Play guess gi element of (E hat i);
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MAIN AGENT ROUTINE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MAIN AGENY ROUTINE
 ;;   14. Get response Xi (bulls) Yi (cows)
 ;; end while
 
-;;1
-(defvar *i*)
+;; population format (fitness (guess))
 
 ;; 2
-(defvar *guess*)
+(defvar *guesses*)
+
+(defvar *previous-generation*)
 
 ;; 7
-(defun initialize-population ())
+(defun initialize-population (population-size colors board)
+  (loop for i from population-size
+     append (create-gene-sequence colors board)))
+
+;; Returns fitness value, does not calculate, this is used to sort
+(defun fitness (populant)
+  (first populant))
 
 ;; 9
-(defun crossover ())
+;; Choose random gene
+(defun mutation (colors)
+    (nth (random (length colors) colors)))
+       
+;; Can be expanded to more than just one operator
+(defun mate (parent1 parent2 colors)
+  (loop for parent1-gene in (second parent1)
+     for parent2-gene in (second parent2)
+     do (let ((prob (random 99)))
+	  if (< prob 45)
+	  append parent1-gene
+	  if (and (>= prob 45) (< prob 90))
+	  append parent2
+	  if (> prob 90)
+	  append (mutation colors))))
+       
 
-;; 9
-(defun mutate ())
-
-;; 9
-(defun inversion ())
-
-;; 9
-(defun permutation ())
-
-;; 10
-(defun calculate-fitness ())
+;; Create a string of genes (colors) at random
+(defun create-gene-sequence (colors board)
+  (loop for i from 1 to board
+       append (nth (random (length colors)))))
 
 (defun genetic-agent (board colors SCSA last-response)
-  (let ((maxgen 100)    ;; arbitrary numbers
-	(maxsize 250)   ;; ...
-	population
-	new-population)   
-    
-    ;; Initialize iteration counter
-    (if (null i)
-	(progn
-	  (setf i 1) ;; Initialize counter
-	  (setf *guess* (A A B C))) ;; Reccommended initial guess
-	(progn
-	  (setf *i* (+ *i* 1))
-	  (setf population (initialize-population))
-	  (loop for h from 1 to maxgen) ;; and size of population less than eq to maxsize
-	  )
+  ;; Make five random initial guesses
+  (if (< (third last-response) 4)
+      (progn
+	(let (guess)
+	  ;; Get the fitness from last-response, place it at (FITNESS (guess))
+	  (setf (second (first *guesses*)) (third last-response))
+	  (setf guess (create-gene-sequence))
+	  (push guess *guesses*)
+	  (push guess *previous-population*)
+	  ;; Play guess
+	  (second (first *guesses*))))
+      ;; Main genetic algorithm loop after first five random guesses
+      (progn
+	(let ((population-size 10)
+	      (generation 1)
+	      population
+	      new-population
+	      10-percent-of-size
+	      90-percent-of-size)
 
-    *guess*))
+	  ;; Give last guess its fitness
+	  (setf (second (first *guesses*)) (third last-response))
+	  
+	  ;; Generate initial population
+	  (setf population (initialize-population population-size))
+
+	  ;; Calculate value, TBD, for now rely on game to give fitness 
+	  
+	  ;; Sort by assigned fitness value
+	  (sort #'fitness population)
+	  
+	  ;; Pick top 10% of previous (sorted) population and place in new population
+	  (setf 10-percent-of-size (* 10 (/ population-size 100)))
+	  (loop for i from 1 to 10-percent-of-size
+	     do (setf new-population (append new-population (nth i population))))
+
+	  ;; Pick the top 50% and mate them, take the resulting offspring to the next generation
+	  (setf ninety-percent (* 90 (/ population-size 100)))
+	  (loop for i from 1 to ninety-percent
+	     append (mate (nth (random (/ population 2)) population)
+			  (nth (random (/ population 2)) population) colors))
+
+	  ;; Recompute fitness and sort again
+	  (sort #'fitness new-population)
+	  (setf *previous-population* new-population)
+
+	  ;; Save next guess
+	  (push (second (first new-population)) *guesses*)
+	  
+	  ;; Play guess at top of pile (the most elite)
+	  (second (first new-population))))))
