@@ -58,14 +58,13 @@
 (defun mate (parent1 parent2 colors)
   (loop for parent1-gene in (second parent1)
      for parent2-gene in (second parent2)
-     do (let ((prob (random 99)))
-	  if (< prob 45)
-	  append parent1-gene
-	  if (and (>= prob 45) (< prob 90))
-	  append parent2
-	  if (> prob 90)
-	  append (mutation colors))))
-       
+     if (< (random 99) 45)
+     append parent1-gene
+     if (and (>= (random 99) 45) (< (random 99) 90))
+     append parent2
+     if (> (random 99) 90)
+     append (mutation colors))))
+
 
 ;; Create a string of genes (colors) at random
 (defun create-gene-sequence (colors board)
@@ -110,8 +109,8 @@
 	     do (setf new-population (append new-population (nth i population))))
 
 	  ;; Pick the top 50% and mate them, take the resulting offspring to the next generation
-	  (setf ninety-percent (* 90 (/ population-size 100)))
-	  (loop for i from 1 to ninety-percent
+	  (setf 90-percent-of-size (* 90 (/ population-size 100)))
+	  (loop for i from 1 to 90-percent-of-size
 	     append (mate (nth (random (/ population 2)) population)
 			  (nth (random (/ population 2)) population) colors))
 
