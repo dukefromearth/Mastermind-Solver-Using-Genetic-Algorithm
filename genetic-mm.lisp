@@ -90,7 +90,7 @@
 	 (progn
 	   (let (guess)
 	     ;; Get the fitness from last-response, place it at (FITNESS (guess))
-	     (setf (second (first *guesses*)) (third last-response))
+	     (setf (second (first *guesses*)) (first last-response))
 	     (setf guess (create-gene-sequence colors board))
 	     (push guess *guesses*)
 	     (push guess *previous-population*)
@@ -109,7 +109,7 @@
 		 90-percent-of-size)
 	     
 	     ;; Give last guess its fitness
-	     (setf (second (first *guesses*)) (third last-response))
+	     (setf (second (first *guesses*)) (first last-response))
 	     
 	     ;; Generate initial population
 	     (setf population (initialize-population population-size colors board))
