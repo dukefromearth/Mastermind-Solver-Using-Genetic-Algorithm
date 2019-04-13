@@ -4,11 +4,14 @@
 ;;               The comment explanations of functions "Update" and "GetNext", as well as their helper functions,
 ;;               are from "AN ALGORITHM TO PLAY THE GAME OF MASTERMIND" by T. Magadeva Rao.
 
-;; Keeps track of inferences
 (defvar *inferences*)
-
-;; Previous guess
 (defvar *trial*)
+(defvar *being-considered*)
+(defvar *being-fixed*)
+(defvar *positions*)
+(defvar *color*)
+(defvar *gain*)
+
 
 ;;;;
 ;;;; GETNEXT Algorithm constructs the next trial arrangement
@@ -28,20 +31,21 @@
 ;;  end
 ;; end 
 
-;;; Implementation ( below currently not working/not correct in transfering from psuedocode to actual code)
-;; (defun getnext ()
-;;   (loop for i in *trial*
-;;        (cond ((tied i) (setf i (itscolor i)))
-;;  	     ((= i (nextpos beingfixed)) (setf i 'beingfixed))
-;;  	     ((= (length *inferences*) (length trial)) (setf i (secondunfixed *inferences*)))
-;;  	     (t (setf i 'beingconsidered)))))
-
+(defun getnext (board)
+  (setf *trial* nil)
+  (loop for i from 1 to board
+     do (cond
+	   ((tied i) (cons (itscolor i) *trial*))
+	   ((= i (nextpos *being-fixed*)) (cons *being-fixed* *trial*))
+	   ((= (length *inferences*) (length *trial*)) (cons (second-unfixed) *trial*))
+  	   (T (cons *being-considered* *trial*))))
+  (setf *trial* *trial*))
 ;;;;
 ;;;; GETNEXT helpers
 ;;;;
 ;;   Tied(pos): boolean; Returns true if the position pos has a color tied to it
 ;;   Example:
-;;         ((A (1)))
+;;         (A (1)) = true, (A (1 2)) = false
 (defun tied (pos)
   (loop for sublist in *inferences*
        ;; Loop through inferences until found, otherwise nill
@@ -57,70 +61,38 @@
 ;;   Nextpos(i): positions; Returns the next possible position for color i. That is if i = 3
 ;;                          and the corresponding sublist is (3 (2 4 5)) then it returns 2.
 (defun nextpos (color)
-  (loop for sublist in *inferences*
-     when (equal (first sublist) color)
-     return (first (second sublist))))
+  (cond
+    ((< 1 (length *inferences*))
+     (loop for sublist in *inferences*
+	when (equal (first sublist) color)
+	return (first (second sublist))))
+    (T 0)))
        
 ;; Secondunfixed : colors, Returns the second color which is not yet fixed
-(defun secondunfixed ()
+(defun second-unfixed ()
   (loop for sublist in *inferences*
      when (> (length (second sublist)) 1)
      collect (first sublist) into unfixed
      finally (return (second unfixed))))
 
-;;;;
-;;;; UPDATE algorithm updates knowledge base
-;;;;
-;;; Pseudocode
-;; Begin
-;;  if beingfixed = 0
-;;  then gain := (bulls + cows)
-;;   - numfix(inferences) - 1
-;;  else gain := (bulls + cows)
-;;   - Numfix (inferences);
-;;  case
-;;   cows = 0
-;;    : Begin
-;;     (* being fixed is OK in current position *)
-;;     Fix(beingfixed)
-;;     Bump(beingfixed)
-;;    end;
-;;   cows = 1
-;;    : Begin
-;;    (*beingfixed is not OK in current position*)
-;;    (*beingconsidered is not OK in current position*)
-;;    (*of beingfixed*)
-;;    if (beingfixed <> 0)
-;;     then Del(beingfixed, beingconsidered);
-;;    Del(beingfixed, beingfixed);
-;;   end;
-;;  cows = 2
-;;   : Fix1(beingconsidered, beingfixed);
-;;  else
-;;   : Reporterror;
-;;  end; (*inferences);
-;;  cleanup(inferences);
-;;  Nextcolor(beingconsidered);
-;; end; (*Update*)
 
-
-;;; Implementation of update may not be correct/properly translated from psuedocode
-;; (defun update (last-response gain colors)
-;;   (if (= beingfixed 0)
-;;       (setf gain (- (+ (first last-response) (second last-response)) (numfix) 1))
-;;       (setf gain (- (+ (first last-response) (second last-response)) (numfix))))
-;;   (case cows
-;;     (0 (progn
-;; 	 (fix beingfixed)
-;; 	 (bump beingfixed)))
-;;     (1 (progn
-;; 	 (if () ; beingfixed <> 0
-;; 	     (del beingfixed beingconsidered))
-;; 	 (del beingfixed beingconsidered)))
-;;     (2 (fix1 beingconsidered beingfixed))
-;;     (otherwise (report-error-update)))
-;;   (cleanup *inferences*)
-;;   (nextcolor beingconsidered colors))
+(defun update (board colors last-response)
+  (break)
+  (if (numberp *being-fixed*)
+      (addlists (- (+ (first last-response) (second last-response)) (numfix) 1))
+      (addlists (- (+ (first last-response) (second last-response)) (numfix))))
+  (case (second last-response)
+    (0 (progn
+	 (fix)
+	 (bump)))
+    (1 (progn
+	 (if (not (equal nil *being-fixed*))
+	     (del *being-fixed* *being-considered*))
+	 (del *being-fixed* *being-fixed*)))
+    (2 (fix1 *being-considered* *being-fixed*))
+    (otherwise (report-error-update)))
+  (cleanup)
+  (nextcolor colors))
 
 ;;;;
 ;;;; UPDATE HELPERS 
@@ -132,9 +104,10 @@
 
 ;;   Addlists(gain, beingconsidered): Adds sublists (equal in number to gain) to the list inferences,
 ;;                                                each sublist with header 'beingconsidered'
-(defun addlists (gain beingconsidered)
+(defun addlists (gain)
   (loop for counter from 1 to gain
-     do (setf *inferences* (append *inferences* (list (list beingconsidered (list nil)))))))
+     do (setf *inferences* (push (list *being-considered* *positions*) *inferences*)))
+  (setf *inferences*  *inferences*))
 
 ;;   Fix (beingfixed): 'Fix'es the beingfixed in its next possible position and deletes appropriate position from
 ;;                      other lists. For example, if beingfixed = 3, and inferences is:
@@ -145,13 +118,13 @@
 ;;                                              ((3 (2))
 ;;                                               (4 (3 4 5))
 ;;                                               (7 (1 3 4 5))
-(defun fix (beingfixed)
-  (let ((position-to-remove (nextpos beingfixed)))
+(defun fix ()
+  (let ((position-to-remove (nextpos *being-fixed*)))
   (loop for sublist in *inferences*
-     when (equal (first sublist) beingfixed)
+     when (equal (first sublist) *being-fixed*)
      do (setf (second sublist) (list (first (second sublist)))))
   (loop for sublist in *inferences*
-     when (not (equal (first sublist) beingfixed))
+     when (not (equal (first sublist) *being-fixed*))
      do (setf (second sublist) (remove position-to-remove (second sublist))))))
 
 ;;   Bump(beingfixed): BeingFixed will get an updated value. If beingfixed = 3 and our inferences look like:
@@ -159,9 +132,9 @@
 ;;                                               (4 (2 3 4 5))
 ;;                                               (7 (1 2 3 4 5))
 ;;   then 3 the nextpos of 3 will become 4.
-(defun bump (beingfixed)
+(defun bump ()
   (loop for sublist in *inferences*
-     when (equal (first sublist) beingfixed)
+     when (equal (first sublist) *being-fixed*)
      do (setf (second sublist) (rest (second sublist)))))
 
 ;;   Del(i j): Deletes the current position of the color i from the sublist for color j. For example, if i=2, j=3
@@ -205,29 +178,38 @@
 ;;   Nextcolor(): Gets a new color for beingconsidered. If all the five colors have already
 ;;                been detected then beingconsidered is simply set to zero
 (defun nextcolor (colors)
-  (loop for sublist in *inferences*
-     do (setf colors (remove (first sublist) colors))
-     finally (return (first colors))))
+  (setf *being-considered* (nth *color* colors))
+  (setf *color* (+ *color* 1)))
 
 ;;   Numfix returns the number of positions tied to a color
 (defun numfix ()
   (loop for sublist in *inferences*
      when (= (length (second sublist)) 1)
-     collect fixed
-       finally (return (length fixed))))
+     collect sublist into fixed
+     finally (return (length fixed))))
+
+(defun initialize (board colors)
+  (setf *being-considered* (first colors))
+  (setf *color* 1)
+  (setf *inferences*  '())
+  (setf *being-fixed* 0)
+  (setf *being-considered* (first colors))
+  (setf *positions* '())
+  (setf *trial* '())
+  
+  (loop for i from 1 to board
+     do (push i *positions*)
+     do (push *being-considered* *trial*))
+  (setf *positions* (reverse *positions*))
+  (setf *trial* *trial*))
 
 ;; Main routine function
-(defun baseline-4-MoonlightPinkFlamingoes (board colors SCSA last-response)
-  ;; Rao's algorithm main routine:
-  ;; Update ()
-  ;; Getnext (trial)
-  
-  ;; Update the inferences
-  (update last-response 1 colors)
-  
-  ;; Get next guess
-  (getnext)
-  
-  ;; return new guess
-  *trial*)
+(defun baseline-4 (board colors SCSA last-response)
+  (declare (ignore SCSA))
+  (cond
+    ((null last-response) (initialize board colors))
+    (T
+     (update board colors last-response)
+     (getnext board)
+     *trial*)))
 
