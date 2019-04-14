@@ -51,7 +51,7 @@
 ;; For example
 ;; (prune-sequence '(A B) '((B C) (B A) (A B) (A A)))
 ;; ((B C) (B A)
-(defun remove_if_any_match (sequence ls)
+(defun remove-if-any-match (sequence ls)
   (labels
       ((aux (sequence ls acc)
 	 (cond
@@ -65,30 +65,20 @@
     (aux sequence ls '())))
 
 (defun baseline-2-MoonlightPinkFlamingoes (board colors SCSA last-response)
-  (declare (ignore SCSA last-response))
+  (declare (ignore SCSA))
   (let (possible)
-    ;; If the set of all possible codes hasn't been generated, generate only once and store in global variable
     (if (null *all-possible-codes*)
-  ;; Permuate a subset for every possible combination
-  (progn
-    (setf possible (permutate colors board))
-    ;; Recursively fold subsets until one last level remains (special condition: final-fold)
-    (setf possible (loop for item in possible collect (fold item)))
-    ;; Perform final fold and possible will be left with all possible permutations
-    (loop for x from 1 to (- board 2)
-       do (setf possible (loop for item in possible append (final-fold item))))
-    (setf *all-possible-codes* possible)))
-
-    ;; Remember previously generated list
-    (setf possible *all-possible-codes*)
-    
-    ;; Remove already used guesses from the front of list
-
-    (if (not (null (member *previous-guess* *all-possible-codes*)))
-        (setf possible (rest (member *previous-guess* *all-possible-codes*))))
-
-    ;; Store guess in gobal variable so it retains the information out of scope
-    (setf *previous-guess* (first possible))
-    ;(print *previous-guess*)
-    ;; finally return next guess in lexographical order:
-(first possible)))
+	(progn
+	  (setf possible (permutate colors board))
+	  (setf possible (loop for item in possible collect (fold item)))
+	  (loop for x from 1 to (- board 2)
+	     do (setf possible (loop for item in possible append (final-fold item))))
+	  (setf *all-possible-codes* possible))
+	(progn
+	  (setf possible *all-possible-codes*)
+	  (setf *previous-guess* (first possible))
+	  (if (and (not (null last-response)) (= 0 (+ (first last-response) (second last-response))))
+	      (setf possible (remove-if-any-match (first possible) (rest possible))))
+	  (setf *all-possible-codes* (rest possible))
+	  ;(break)
+	  (first possible)))))
