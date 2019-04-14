@@ -175,13 +175,11 @@
      (* weight-b board (1- turns-played))))
 
 ;; Return list with elite 10% of population
-;; CHECKED
 (defun get-elite-10-percent (population 10-percent)
   (loop for i from 1 to 10-percent
      collect (nth i population)))
 
 ;; Return list with mated top 50% to form remaining 90% of population
-;; CULPRIT
 (defun get-mated-90-percent (population 90-percent colors)
   (let (offspring)
     (loop for i from 1 to 90-percent
@@ -202,7 +200,6 @@
 		   (second candidate))))
 
   ;; Generate new populations using elitism and mating until reaching max-generations
-  ;; Comb each generation for duplicates and present in previous generation
   (defun generation-loop (max-gen population colors weight-a weight-b board last-response)
     (let ((generation population)
 	  old-generation)
