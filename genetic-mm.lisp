@@ -51,9 +51,9 @@
 ;;                            (summation of differences of c and previous guesses on white pegs) +
 ;;                        b * P(i - 1)
 
-;; 2
-(defvar *guesses* nil)
 
+(defvar *guesses* nil)
+(defvar *previous-population* nil)
 
 ;; Generate a population of specified size at random
 (defun initialize-population (population-size colors board)
@@ -64,24 +64,23 @@
 (defun fitness (candidate)
   (first candidate))
 
-;; 9
 ;; Choose random gene
 (defun mutation (colors)
     (nth (random (length colors)) colors))
        
-;; Mate two guesses and produce an offspring
-;; Can be expanded to more than just one operator
-;; Currently uses mutation and crossover based on probability
+;; Mate two guesses and produce an offspring using crossover
 (defun mate (parent1 parent2 colors)
-  (loop for parent1-gene in (second parent1)
-     for parent2-gene in (second parent2)
-     if (< (random 99) 45)
-     collect parent1-gene
-     if (and (>= (random 99) 45) (< (random 99) 90))
-     collect parent2-gene
-     if (> (random 99) 90)
-     collect (mutation colors)))
-
+  (let (prob)
+    (loop for parent1-gene in (second parent1)
+       for parent2-gene in (second parent2)
+       do (setf prob (random 99))
+       if (< prob 45)
+       collect parent1-gene
+       if (and (>= prob 45) (< prob 90))
+       collect parent2-gene
+       if (>= prob 90)
+       collect (mutation colors))))
+  
 
 ;; Create a candidate/candidate using genes (colors) at random
 (defun create-gene-sequence (colors board)
@@ -95,7 +94,7 @@
 
 
 ;; Helper function for play-candidate-with-guess
-;; Credit for original"spot" function goes to Professor Susan Epstein
+;; Credit for original "spot" function goes to Professor Susan Epstein
 (defun spot-color (color)
   (case color
     (A 0)
@@ -163,7 +162,6 @@
      sum (abs (- (first (process-candidate-with-guess candidate (third guess) colors))
 		 (first guess)))))
 
-
 ;; Calculate difference of white pegs of candidate c with previous guesses
 (defun summate-white-peg-difference (candidate colors)
   (loop for guess in *guesses*
@@ -176,97 +174,123 @@
      (summate-white-peg-difference candidate colors)
      (* weight-b board (1- turns-played))))
 
+;; Return list with elite 10% of population
+;; CHECKED
+(defun get-elite-10-percent (population 10-percent)
+  (loop for i from 1 to 10-percent
+     collect (nth i population)))
 
+;; Return list with mated top 50% to form remaining 90% of population
+;; CULPRIT
+(defun get-mated-90-percent (population 90-percent colors)
+  (let (offspring)
+    (loop for i from 1 to 90-percent
+       do (setf offspring (mate (random-top-fifty-candidate (length population) population)
+				(random-top-fifty-candidate (length population) population) colors))
+       when (not (member offspring population))
+       append (list (list 0 offspring)))))
+  
+;; Assign fitness values to population
+(defun return-population-with-fitness (population colors weight-a weight-b board last-response)
+  (loop for candidate in population
+     collect (list (calculate-fitness (second candidate)
+				      colors
+				      weight-a
+				      weight-b
+				      board
+				      (third last-response))
+		   (second candidate))))
+
+  ;; Generate new populations using elitism and mating until reaching max-generations
+  ;; Comb each generation for duplicates and present in previous generation
+  (defun generation-loop (max-gen population colors weight-a weight-b board last-response)
+    (let ((generation population)
+	  old-generation)
+      (loop for i from 1 to max-gen
+	 do (setf old-generation generation)
+	 do (setf generation (get-elite-10-percent generation (* 10 (/ (length generation) 100))))
+	 do (setf generation (append generation
+				     (get-mated-90-percent old-generation
+							   (* 90 (/ (length old-generation) 100)) colors)))
+	 do (setf generation (return-population-with-fitness generation
+							     colors
+							     weight-a
+							     weight-b
+							     board
+							     last-response))
+	 do (setf generation (sort generation #'< :key #'fitness))
+	 finally (return generation))))
+
+;; Remove duplicates and already guessed candidates from population
+(defun remove-guessed-candidates (population)
+  (loop for candidate in population
+     when (not (member (second candidate) *guesses* :key #'(lambda (x) (third x))))
+       collect candidate))
+
+;; Main routine
 (defun genetic-agent (board colors SCSA last-response)
   (declare (ignore SCSA))
-  ;; Make initial guess
-  (cond ((null last-response)
+
+  (cond ((null last-response) ;; First turn routine
 	 (progn
 	   (let (guess)
+	     (setf *previous-population* nil)
 	     (setf *guesses* nil)
-
-	     (print board)
-	     (print colors)
+	     
 	     ;; Get the fitness from last-response, place it at (FITNESS (guess))
-	     (setf guess '(A A B C))
+	     (if (and (= board 4) (= (length colors) 6))
+		 (setf guess '(A A B C))
+		 (setf guess (create-gene-sequence colors board)))
+	      ;; For board = 4, color = 6
 	     (push (list guess) *guesses*)
-
-	     ;; debug
 	     ;; (print *guesses*)
+
+	     ;; Since first turn, prepare variable for next routine
+	     (setf *previous-population* (initialize-population 60 colors board))
+	     
 	     ;; Play guess, only element in list at this point: ((guess))
 	     (first (first *guesses*)))))
 	(T
 	 (progn
-	   (let ((population-size 10)
-		 ;; Reccommended by paper to limit generations to 100
-		 ;; (generation 100)
-		 ;; Recommended by paper to limit population to 60
-		 ;; (population-size 60)
+	   (let ((max-generation 100)
 		 (weight-a 1)
 		 (weight-b 1)
 		 population
-		 new-population
-		 10-percent-of-size
-		 90-percent-of-size)
+		 new-population)
 	     ;; Give last guess its result)
 	     ;; ... Push white pegs
 	     (push (second last-response) (first *guesses*))
 	     ;; ... Push black pegs
 	     (push (first last-response) (first *guesses*))
 
+	     ;; Extra info: Previous guess
 	     (print "")
 	     (print "Last guess: ")
 	     (print (first *guesses*))
-	     ;; Generate initial population
-	     ;;(print "Generating random population...")
-	     (setf population (initialize-population population-size colors board))
-	     ;; Remove duplicates
 
-	     
-	     ;; Calculate value, TBD, for now rely on game to give fitness
-	     (loop for candidate in population
-		collect (list (calculate-fitness (second candidate)
-						 colors
-						 weight-a
-						 weight-b
-						 board
-						 (third last-response))
-			      (second candidate))
-		into fitness-calculated-population
-		finally (setf population fitness-calculated-population))
-	     
-	     ;; Sort by assigned fitness value decreasing, lower fitness indicates higher quality
-	     (setf population (sort population #'< :key #'fitness))
-	     ;; Pick top 10% of previous (sorted) population and place in new population
-	     ;;(print "Performing elitsm...")
-	     (setf 10-percent-of-size (* 10 (/ population-size 100)))
-	     (loop for i from 1 to 10-percent-of-size
-		do (setf new-population (append new-population (nth i population))))
-	     ;; (print "Mating...")
-	     ;; Pick the top 50% and mate them, take the resulting offspring to the next generation
-	     (setf 90-percent-of-size (* 90 (/ population-size 100)))
-	     (loop for i from 1 to 90-percent-of-size
-		append (mate (random-top-fifty-candidate population-size population)
-			     (random-top-fifty-candidate population-size population) colors)
-		into offspring
+	     (setf population *previous-population*)
+	     (setf new-population (generation-loop max-generation
+						   population
+						   colors
+						   weight-a
+						   weight-b
+						   board
+						   last-response))
 
-		finally (setf new-population (append new-population offspring)))
-	     
-	     ;; Recompute fitness and sort again
+	     (setf new-population (remove-guessed-candidates new-population))
+	     ;; Extra info: New population
 	     (print "")
 	     (print "New population:")
-	     (setf new-population (sort population #'< :key #'fitness))
 	     (loop for i in new-population
-		  do (print i))
-	     ;; Choose most elite guess
+   	     do (print i))
+	     
 	     ;; Remove fitness value, turning candidate into guess
-
 	     ;; Pre-pop: (fitness (A B C D))
 	     ;; post-pop: ((A B C D))
 	     (pop (first new-population))
 	     (push (first new-population) *guesses*)
 
-	     
+	     (setf *previous-population* new-population)
 	     ;; debug
 	     ;; (print *guesses*)
 	     ;;(print "Sending next guess")
