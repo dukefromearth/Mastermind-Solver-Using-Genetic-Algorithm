@@ -3,17 +3,14 @@
 ;; Description:  Baseline-3 agent first determines the number of each color peg,
 ;;               then generates permutations from the colors and their numbers.
 
-;; The agent will need some form of memory
-(defvar *remaining-possibilities* nil)
-
-(defvar *previous-guesses* nil)
-(defvar *previous-hints* nil)
-
+;; Global variables to keep track of previous guesses and their results.
+;;(defvar *previous-hints* nil)
+;;(defvar *previous-guesses* nil)
 (defvar *current-guess* 1)
-(defvar *available-letters* nil)
 (defvar *color-counts*)
 (defvar *previous-guess*)
 
+;;Given a number, convert it into the corresponding symbol.
 (defun unspot (number)
   (case number
     (0 'A)
@@ -43,15 +40,18 @@
     (24 'Y)
     (25 'Z)))
 
+;; Given a list of numbers, convert it into a list of corresponding symbols.
 (defun num-to-symb (list)
   (loop for num in list
        collect (unspot num)))
 
+;; Given a list of numbers, return the next permutation in lexicographic order.
 (defun next-num-perm (list)
   (loop for i from 1 to (1- (length list))
      with suffix = (list (first list))
      with pivot = nil
      with prefix = nil
+     with successor = nil
      do (if (>= (first suffix) (nth i list))
 	    (setf suffix (cons (nth i list) suffix))
 	    (progn
@@ -73,60 +73,39 @@
 
 (defun baseline-3-MoonlightPinkFlamingoes (board colors SCSA last-response)
   (declare (ignore SCSA))
-  
-  (cond ((equal last-response nil)
+  (cond ((equal last-response nil)  ; The first guess of all As
 	 (progn
 	   (setf *current-guess* 1)
-	   (setf *available-letters* nil)
 	   (setf *color-counts* (make-array (length colors)))
-	   ;;(print *current-guess*)
-	   ;;(print "FIRST")
 	   (setf *current-guess* (1+ *current-guess*))
-	   ;;(print (make-list board :initial-element (nth (- *current-guess* 2) colors)))
+       ;;(print (make-list board :initial-element (nth (- *current-guess* 2) colors)))
 	   (make-list board :initial-element (nth (- *current-guess* 2) colors))))
 	
-	((<= *current-guess* (length colors))
-	 ;; AND length of available-letters > 0
+	((< *current-guess* (length colors))    ; subsequent single color guesses
 	 (progn
-	   ;;(print *current-guess*)
-	   ;;(print "SINGLE COLORS")
 	   (setf (aref *color-counts* (- (third last-response) 1)) (+ (first last-response) (second last-response)))
 	   (setf *current-guess* (1+ *current-guess*))
 	   ;;(print (make-list board :initial-element (nth (- *current-guess* 2) colors)))
 	   (make-list board :initial-element (nth (- *current-guess* 2) colors))))
 	
-	((= *current-guess* (1+ (length colors)))
+	((= *current-guess* (length colors))    ; the first permutation guess
 	 (progn
-	   ;;(print *current-guess*)
-	   ;;(print "FIRST PERMUTATION")
 	   (setf (aref *color-counts* (- (third last-response) 1)) (+ (first last-response) (second last-response)))
-	   ;;(print *color-counts*)
+	   (setf (aref *color-counts* (third last-response)) (- board (reduce #'+ *color-counts*)))
 	   (setf *current-guess* (1+ *current-guess*))
-	   ;;(print (make-list board :initial-element (nth 0 colors)))
-	   ;;(make-list board :initial-element (nth 0 colors))))
 	   (setf *previous-guess* (append (loop for x from 0 to (- (length colors) 1)
 	      for color in colors
-		
-	      ;;do (print color)
-	      ;;do (print  (aref *color-counts* x))
 	      when (> (aref *color-counts* x) 0)
 	      append (loop for y from 0 to (1- (aref *color-counts* x))
-			;;do (print color)
 			collect (spot color)))))
 	   ;;(print (num-to-symb *previous-guess*))
 	   (num-to-symb *previous-guess*)))
 	
-	(T
+	(T  ; Subsequent permutation guesses
 	 (progn
-	   ;;(print *current-guess*)
 	   (setf *current-guess* (1+ *current-guess*))
-	   ;(print (make-list board :initial-element (nth 0 colors)))
-					;(make-list board :initial-element (nth 0 colors))))))
 	   (setf *previous-guess* (next-num-perm *previous-guess*))
 	   ;;(print (num-to-symb *previous-guess*))
 	   (num-to-symb *previous-guess*)))))
-         
-
-;;(print (all-permutations '(A A A B)))
 
 
