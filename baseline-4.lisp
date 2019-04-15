@@ -204,7 +204,7 @@
   (setf *trial* *trial*))
 
 ;; Main routine function
-(defun baseline-4 (board colors SCSA last-response)
+(defun baseline-4-MoonlightPinkFlamingoes (board colors SCSA last-response)
   (declare (ignore SCSA))
   (cond
     ((null last-response) (initialize board colors))
