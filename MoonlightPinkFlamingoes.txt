@@ -1,0 +1,20 @@
+Snapshot of tournament output when played 100 rounds on 4 pegs and 6 colors on the ab-color SCSA
+
+
+CL-USER> (play-tournament *Mastermind* 'baseline-1-moonlightpinkflamingoes 'ab-color 100)
+
+BASELINE-1-MOONLIGHTPINKFLAMINGOES 
+(SCORE 15.605535) 
+(3.1211069 88 0)
+
+CL-USER> (play-tournament *Mastermind* 'baseline-2-moonlightpinkflamingoes 'ab-color 100)
+
+BASELINE-2-MOONLIGHTPINKFLAMINGOES 
+(SCORE 86.08241) 
+(17.216482 52 0)
+
+CL-USER> (play-tournament *Mastermind* 'baseline-3-moonlightpinkflamingoes 'ab-color 100)
+
+BASELINE-3-MOONLIGHTPINKFLAMINGOES 
+(SCORE 204.88342) 
+(40.976685 0 0)

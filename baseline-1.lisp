@@ -82,5 +82,5 @@
 	  (setf *previous-guess* (first possible))
 					;(print *previous-guess*)
 	  ;; finally return next guess in lexographical order:
-	  (print (first possible))
+	  ;(print (first possible))
 	  (first possible)))))
