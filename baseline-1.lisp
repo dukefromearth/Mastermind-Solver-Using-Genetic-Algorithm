@@ -72,8 +72,15 @@
     (if (not (null (member *previous-guess* *all-possible-codes*)))
 	      (setf possible (rest (member *previous-guess* *all-possible-codes*))))
 
-    ;; Store guess in gobal variable so it retains the information out of scope
-    (setf *previous-guess* (first possible))
-    ;(print *previous-guess*)
-    ;; finally return next guess in lexographical order:
-    (first possible)))
+    (if (null (first possible))
+	(progn
+	  (setf possible '(F F F F))
+	  (setf *all-possible-codes* nil)
+	  possible)
+	(progn
+	  ;; Store guess in gobal variable so it retains the information out of scope
+	  (setf *previous-guess* (first possible))
+					;(print *previous-guess*)
+	  ;; finally return next guess in lexographical order:
+	  (print (first possible))
+	  (first possible)))))
