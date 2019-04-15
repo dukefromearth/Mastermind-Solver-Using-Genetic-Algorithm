@@ -84,6 +84,13 @@
 	  ;; finally return next guess in lexographical order:
 	  ;(print (first possible))
 	  (first possible)))))
+
+
+
+
+
+
+
 ;; Team: Moonlight Pink Flamingoes
 ;; Name of file: baseline-2.lisp
 ;; Description: Baseline-2 guesses every possibility in lexigraphical
