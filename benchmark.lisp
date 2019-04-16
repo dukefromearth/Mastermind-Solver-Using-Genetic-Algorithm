@@ -14,7 +14,7 @@
 ;;     Ex: (Mastermind 4 6 'ab-color)
 ;;
 ;;   Ensure that you save previous benchmark data by changing its name, IT WILL GET OVERWRITTEN
-;;   you run this program (Change "benchmark-statistics.txt" to anything else).
+;;   once you run this program (Change "benchmark-statistics.txt" to anything else).
 ;;
 ;;   Run this benchmark using Mastermind parameters
 ;;     Ex: (benchmark 'baseline-3-MoonlightPinkFlamingoes 'ab-color 10)
