@@ -181,7 +181,8 @@
 
 ;; Return list with mated top 50% to form remaining 90% of population
 (defun get-mated-90-percent (population 90-percent colors)
-  (let (offspring)
+  (let (offspring
+	)
     (loop for i from 1 to (float 90-percent)
        do (setf offspring (mate (random-top-fifty-candidate (length population) population)
 				(random-top-fifty-candidate (length population) population) colors))
@@ -198,26 +199,26 @@
 				      (third last-response))
 		   (second candidate))))
 
-  ;; Generate new populations using elitism and mating until reaching max-generations
-  ;; Comb each generation for duplicates and present in previous generation
-  (defun generation-loop (max-gen population colors weight-a weight-b board last-response)
-    (let ((generation population)
-	  old-generation)
-      (loop for i from 1 to max-gen
-	 do (setf old-generation generation)
-	 do (setf generation (get-elite-10-percent generation (* 10 (/ (length generation) 100))))
-	 while (< (length generation) 100)
-	 do (setf generation (append generation
-				     (get-mated-90-percent old-generation
-							   (* 90 (/ (length old-generation) 100)) colors)))
-	 do (setf generation (return-population-with-fitness generation
-							     colors
-							     weight-a
-							     weight-b
-							     board
-							     last-response))
-	 do (setf generation (sort generation #'< :key #'fitness))
-	 finally (return generation))))
+;; Generate new populations using elitism and mating until reaching max-generations
+;; Comb each generation for duplicates and present in previous generation
+(defun generation-loop (max-gen population colors weight-a weight-b board last-response)
+  (let ((generation population)
+	old-generation)
+    (loop for i from 1 to max-gen
+       do (setf old-generation generation)
+       do (setf generation (get-elite-10-percent generation (* 10 (/ (length generation) 100))))
+       while (< (length generation) 100)
+       do (setf generation (append generation
+				   (get-mated-90-percent old-generation
+							 (* 90 (/ (length old-generation) 100)) colors)))
+       do (setf generation (return-population-with-fitness generation
+							   colors
+							   weight-a
+							   weight-b
+							   board
+							   last-response))
+       do (setf generation (sort generation #'< :key #'fitness))
+       finally (return generation))))
 
 ;; Remove guessed
 (defun guessed-alreadyp (candidate)
@@ -241,7 +242,7 @@
 	     ;; Get the fitness from last-response, place it at (FITNESS (guess))
 	     (if (and (= board 4) (= (length colors) 6))
 		 (setf guess '(A A B C))
-		 (setf guess (create-gene-sequence colors board)))
+		 (setf guess (second (create-gene-sequence colors board))))
 	      ;; For board = 4, color = 6
 	     (push (list guess) *guesses*)
 	     ;; (print *guesses*)
@@ -284,13 +285,13 @@
 	     ;; (print "Guesses: ")
 	     ;; (print *guesses*)
 	     ;; (print "New:")
-	     ;(print last-response)
+	     (print last-response)
 
 	     ;; Extra info: New population
-	     (print "")
-	     (print "New population:")
-	     (loop for i in new-population
-   	     do (print i))
+	     ;; (print "")
+	     ;; (print "New population:")
+	     ;; (loop for i in new-population
+   	     ;; do (print i))
 	     
 	     ;; Remove fitness value, turning candidate into guess
 	     ;; Pre-pop: (fitness (A B C D))
@@ -304,5 +305,5 @@
 	     ;; (print *guesses*)
 	     ;;(print "Sending next guess")
 	     ;; Play guess at top of pile (the most elite)
-	     ;(print (first (first *guesses*)))
+	     (print (first (first *guesses*)))
 	     (first (first *guesses*)))))))
