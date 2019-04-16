@@ -35,7 +35,7 @@
 	 do (setf run1 (get-internal-real-time))
 
 	 ;; Run tournament round
-	 do (format stream "Round ~a: ~a~%" i (play-tournament *Mastermind* agent-name SCSA number-of-rounds))
+	 do (format stream "Round ~a: ~a~%" i (play-tournament *Mastermind* agent-name SCSA 1))
 
 	 ;; Get second timings
 	 do (setf run2 (get-internal-real-time))
