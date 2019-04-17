@@ -207,7 +207,6 @@
     (loop for i from 1 to max-gen
        do (setf old-generation generation)
        do (setf generation (get-elite-10-percent generation (* 10 (/ (length generation) 100))))
-       while (< (length generation) 100)
        do (setf generation (append generation
 				   (get-mated-90-percent old-generation
 							 (* 90 (/ (length old-generation) 100)) colors)))
@@ -219,6 +218,8 @@
 							   last-response))
        do (setf generation (sort generation #'< :key #'fitness))
        finally (return generation))))
+
+;; Choose best guess from 
 
 ;; Remove guessed
 (defun guessed-alreadyp (candidate)
@@ -248,7 +249,7 @@
 	     ;; (print *guesses*)
 
 	     ;; Since first turn, prepare variable for next routine
-	     (setf *previous-population* (initialize-population 60 colors board))
+	     (setf *previous-population* (initialize-population 150 colors board))
 	     
 	     ;; Play guess, only element in list at this point: ((guess))
 	     (first (first *guesses*)))))
@@ -258,7 +259,8 @@
 		 (weight-a 1)
 		 (weight-b 1)
 		 population
-		 new-population)
+		 new-population
+		 best-guess)
 	     ;; Give last guess its result)
 	     ;; ... Push white pegs
 	     (push (second last-response) (first *guesses*))
@@ -281,29 +283,32 @@
 
 	     (setf *previous-population* new-population)
 	     (setf new-population (remove-if #'guessed-alreadyp (remove-duplicate-candidates new-population)))
-
 	     ;; (print "Guesses: ")
 	     ;; (print *guesses*)
 	     ;; (print "New:")
-	     (print last-response)
+
 
 	     ;; Extra info: New population
 	     ;; (print "")
-	     ;; (print "New population:")
-	     ;; (loop for i in new-population
-   	     ;; do (print i))
+	      (print "New population:")
+	      (loop for i in new-population
+   	      do (print i))
 	     
 	     ;; Remove fitness value, turning candidate into guess
 	     ;; Pre-pop: (fitness (A B C D))
 	     ;; post-pop: ((A B C D))
-	     
+
+	      
+	      
 	     (pop (first new-population))
 	     (push (first new-population) *guesses*)
 
 
 	     ;; debug
 	     ;; (print *guesses*)
-	     ;;(print "Sending next guess")
+	     (print "Sending next guess")
+	     (print "")
 	     ;; Play guess at top of pile (the most elite)
 	     (print (first (first *guesses*)))
+	     (print last-response)
 	     (first (first *guesses*)))))))
