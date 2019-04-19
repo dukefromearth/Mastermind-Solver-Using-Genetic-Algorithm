@@ -325,7 +325,6 @@
 	     
 	     (setf new-population (generation-loop *previous-population*))
 	     (setf *previous-population* new-population)
-	     (setf new-population new-population)
 	     
 	     ;; (print "Guesses: ")
 	     ;; (print *guesses*)
