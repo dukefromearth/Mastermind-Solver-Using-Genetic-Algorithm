@@ -185,6 +185,15 @@
      (summate-white-peg-difference candidate)
      (* *weight-b* *board* (1- *turns-played*))))
 
+;; Calculate fitness by heuristic, described in comment header
+(defun calculate-similarity (candidate population)
+  (let ((population-without-candidate (remove candidate population :key #'second))
+	score)
+  (loop for guess in population-without-candidate
+       do (setf score (process-candidate-with-guess (second candidate) (second guess)))
+      sum (+ (first score) (second score)))))
+
+
 ;; Return list with elite 10% of population
 (defun get-elite-10-percent (population)
   (loop for i from 1 to (float *10-percent-of-size*)
@@ -219,8 +228,21 @@
        do (setf generation (sort generation #'< :key #'fitness))
        finally (return generation))))
 
-;; Choose best guess from new-population (sceondary heuristic), plays each a candidate against all others
-;; and chooses the candidate that scores the highest (most similar)
+;; Choose best guess from new-population (sceondary heuristic),
+;; plays each a candidate against all others and chooses the candidate
+;; that scores the highest (most similar)
+(defun choose-best-guess (population)
+  (let ((similarity 0)
+	(highest-similarity 0)
+	best-guess)
+    (format t "~%~%Similarity heuristic:")
+    (loop for candidate in population
+       do (setf similarity (calculate-similarity candidate population))
+       do (format t "~%~a : ~a" (second candidate) similarity)
+       when (> similarity highest-similarity)
+       do (setf highest-similarity similarity)
+       and do (setf best-guess (second candidate))
+       finally (return (list best-guess)))))
 
 ;; Remove guessed
 (defun guessed-alreadyp (candidate)
@@ -263,16 +285,17 @@
 
 	     ;; Since first turn, prepare variable for next routine
 	     (setf *previous-population* (initialize-population))
-	     
+	     (format t "~%INITIAL GUESS: ~a~%" guess)
 	     ;; Play guess, only element in list at this point: ((guess))
 	     (first (first *guesses*)))))
 	(T
 	 (progn
 	   (let (new-population best-guess)
-	     (print last-response)
+	    ; (print (first (first *guesses*)))
+	    ; (print last-response)
 	     ;; iterate turn counter
 	     (setf *turns-played* (1+ *turns-played*))
-	     
+	     (format t "Score for above guess: ~a~%" last-response)
 	     ;; Give last guess its result)
 	     ;; ... Push white pegs
 	     (push (second last-response) (first *guesses*))
@@ -295,24 +318,23 @@
 
 	     ;; Extra info: New population
 	     ;; (print "")
-	      (print "New population:")
-	      (loop for i in new-population
-   	      do (print i))
+	     (format t "~%New population:")
+	     (loop for i in new-population
+		do (print i))
 	     
 	     ;; Remove fitness value, turning candidate into guess
 	     ;; Pre-pop: (fitness (A B C D))
 	     ;; post-pop: ((A B C D))
-
-	      
-	      
-	     (pop (first new-population))
-	     (push (first new-population) *guesses*)
-
+	     
+	     
+	     (setf best-guess (choose-best-guess new-population))
+	     
+	     (push best-guess *guesses*)
+	     (format t "~%BEST GUESS CHOSEN: ~a~%" best-guess)
 
 	     ;; debug
 	     ;; (print *guesses*)
-	     (print "Sending next guess")
-	     (print "")
+	     ;(print "Sending next guess")
+	    ; (print "")
 	     ;; Play guess at top of pile (the most elite)
-	     (print (first (first *guesses*)))
 	     (first (first *guesses*)))))))
