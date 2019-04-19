@@ -51,10 +51,9 @@
 ;;                            (summation of differences of c and previous guesses on white pegs) +
 ;;                        b * P(i - 1)
 
-
-
 (defvar *guesses*)
 (defvar *max-generations*)
+(defvar *max-size*)
 (defvar *previous-population*)
 (defvar *population-size*)
 (defvar *colors*)
@@ -68,8 +67,13 @@
 
 ;; Generate a population of specified size at random
 (defun initialize-population ()
-  (loop for i from 1 to *population-size*
-     collect (create-gene-sequence)))
+  (let (population candidate)
+    (loop until (= (length population) *population-size*)
+       do (setf candidate (create-gene-sequence))
+       when (not (member (second candidate) population :test #'equal :key #'second))
+       do (setf population (append population (list candidate)))
+       and do (setf population (remove-duplicate-candidates population))
+       finally (return population))))
 
 ;; Returns fitness value, does not calculate, this is used in sort operations
 (defun fitness (candidate)
@@ -84,12 +88,12 @@
   (let (prob)
     (loop for parent1-gene in (second parent1)
        for parent2-gene in (second parent2)
-       do (setf prob (random 99))
-       if (< prob 45)
+       do (setf prob (random 999))
+       if (< prob 490)
        collect parent1-gene
-       if (and (>= prob 45) (< prob 90))
+       if (and (>= prob 490) (< prob 980))
        collect parent2-gene
-       if (>= prob 90)
+       if (>= prob 980)
        collect (mutation))))
   
 
@@ -101,7 +105,7 @@
 
 ;; For use in list sorted by fitness, give random candidate position in top 50% of population
 (defun random-top-fifty-candidate (population)
-  (nth (random (floor (/ *population-size* 2))) population))
+  (nth (random (floor *50-percent-of-size*)) population))
 
 
 ;; Helper function for play-candidate-with-guess
@@ -196,16 +200,24 @@
 
 ;; Return list with elite 10% of population
 (defun get-elite-10-percent (population)
-  (loop for i from 1 to (float *10-percent-of-size*)
-     collect (nth i population)))
+  (let (elite-population counter)
+    (setf counter 1)
+    (loop until (= (length elite-population) *10-percent-of-size*)
+       when (not (member (second (nth counter population)) elite-population
+			 :test #'equal :key #'second))
+       do (setf elite-population (append elite-population (list (nth counter population))))
+       do (setf counter (1+ counter))
+       finally (return elite-population))))
 
 ;; Return list with mated top 50% to form remaining 90% of population
 (defun get-mated-90-percent (population)
-  (let (offspring)
-    (loop for i from 1 to (float *90-percent-of-size*)
+  (let (offspring mated-population)
+    (loop until (= (length mated-population) *90-percent-of-size*)
        do (setf offspring (mate (random-top-fifty-candidate population)
 				(random-top-fifty-candidate population)))
-       append (list (list 0 offspring)))))
+       when (not (member offspring mated-population :test #'equal :key #'second))
+       do (setf mated-population (append mated-population (list (list 0 offspring))))
+	 finally (return mated-population))))
   
 ;; Assign fitness values to population
 (defun return-population-with-fitness (population)
@@ -219,13 +231,17 @@
 	old-generation)
     (loop for i from 1 to *max-generations*
        do (setf old-generation generation)
-       do (setf *10-percent-of-size* (* 10 (/ (length generation) 100)))
-       do (setf *90-percent-of-size* (* 90 (/ (length generation) 100)))
-       do (setf *50-percent-of-size* (/ (length generation) 2))
+       ;do (setf *10-percent-of-size* (* 10 (/ (length generation) 100)))
+       ;do (setf *90-percent-of-size* (* 90 (/ (length generation) 100)))
+       ;do (setf *50-percent-of-size* (/ (length generation) 2))
        do (setf generation (get-elite-10-percent generation))
+       ;do (format t "~%ELITES: ~a" generation)
        do (setf generation (append generation (get-mated-90-percent old-generation)))
+       ;do (format t "~%WITH MATED: ~a" generation)
        do (setf generation (return-population-with-fitness generation))
+       ;do (format t "~%WITH FITNESS: ~a" generation)
        do (setf generation (sort generation #'< :key #'fitness))
+       ;do (format t "~%SORTED: ~a" generation)
        finally (return generation))))
 
 ;; Choose best guess from new-population (sceondary heuristic),
@@ -235,7 +251,7 @@
   (let ((similarity 0)
 	(highest-similarity 0)
 	best-guess)
-    (format t "~%~%Similarity heuristic:")
+    ;(format t "~%~%Similarity heuristic:")
     (loop for candidate in population
        do (setf similarity (calculate-similarity candidate population))
        do (format t "~%~a : ~a" (second candidate) similarity)
@@ -245,18 +261,14 @@
        finally (return (list best-guess)))))
 
 ;; Remove guessed
-(defun guessed-alreadyp (candidate)
-  (member (second candidate) *guesses* :test #'equal :key #'third))
-
+(defun guessed-alreadyp (candidate) (member (second candidate) *guesses* :test #'equal :key #'third))
 
 ;; Remove duplicates
-(defun remove-duplicate-candidates (population)
-  (remove-duplicates population :test #'equal :key #'second))
+(defun remove-duplicate-candidates (population) (remove-duplicates population :test #'equal :key #'second))
 
 ;; Main routine
 (defun genetic-agent (board colors SCSA last-response)
   (declare (ignore SCSA))
-
   (cond ((null last-response) ;; First turn routine
 	 (progn
 	   (let (guess)
@@ -264,10 +276,12 @@
 	     ;; Initialize and clear main variables
 	     (setf *previous-population* nil)
 	     (setf *guesses* nil)
-	     (setf *10-percent-of-size* nil)
-	     (setf *90-percent-of-size* nil)
-	     (setf *50-percent-of-size* nil)
+	     (setf *max-size* 60)
+	     (setf *10-percent-of-size* (* 10 (/ *max-size* 100)))
+	     (setf *90-percent-of-size* (* 90 (/ *max-size* 100))) 
+	     (setf *50-percent-of-size* (* 50 (/ *max-size* 100)))
 	     (setf *max-generations* 100)
+	     (setf *max-size* 60)
 	     (setf *population-size* 150)
 	     (setf *colors* colors)
 	     (setf *board* board)
@@ -285,14 +299,14 @@
 
 	     ;; Since first turn, prepare variable for next routine
 	     (setf *previous-population* (initialize-population))
-	     (format t "~%INITIAL GUESS: ~a~%" guess)
+	     ;(format t "~%INITIAL GUESS: ~a~%" guess)
 	     ;; Play guess, only element in list at this point: ((guess))
 	     (first (first *guesses*)))))
 	(T
 	 (progn
 	   (let (new-population best-guess)
-	    ; (print (first (first *guesses*)))
-	    ; (print last-response)
+	     ;(print (first (first *guesses*)))
+	     ;(print last-response)
 	     ;; iterate turn counter
 	     (setf *turns-played* (1+ *turns-played*))
 	     (format t "Score for above guess: ~a~%" last-response)
@@ -306,35 +320,28 @@
 	     ;; (print "")
 	     ;; (print "Last guess: ")
 	     ;; (print (first *guesses*))
-
+	     
 	     (setf new-population (generation-loop *previous-population*))
-
 	     (setf *previous-population* new-population)
-	     (setf new-population (remove-if #'guessed-alreadyp (remove-duplicate-candidates new-population)))
+	     (setf new-population (remove-if #'guessed-alreadyp new-population))
+	     
 	     ;; (print "Guesses: ")
 	     ;; (print *guesses*)
 	     ;; (print "New:")
-
 
 	     ;; Extra info: New population
 	     ;; (print "")
 	     (format t "~%New population:")
 	     (loop for i in new-population
-		do (print i))
-	     
-	     ;; Remove fitness value, turning candidate into guess
-	     ;; Pre-pop: (fitness (A B C D))
-	     ;; post-pop: ((A B C D))
-	     
+	    	do (print i))
 	     
 	     (setf best-guess (choose-best-guess new-population))
-	     
 	     (push best-guess *guesses*)
 	     (format t "~%BEST GUESS CHOSEN: ~a~%" best-guess)
 
 	     ;; debug
 	     ;; (print *guesses*)
 	     ;(print "Sending next guess")
-	    ; (print "")
+	     ;(print "")
 	     ;; Play guess at top of pile (the most elite)
 	     (first (first *guesses*)))))))
