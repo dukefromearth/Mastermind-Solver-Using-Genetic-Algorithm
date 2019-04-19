@@ -203,8 +203,9 @@
   (let (elite-population counter)
     (setf counter 1)
     (loop until (= (length elite-population) *10-percent-of-size*)
-       when (not (member (second (nth counter population)) elite-population
-			 :test #'equal :key #'second))
+       when (and (not (guessed-alreadyp (second (nth counter population))))
+		 (not (member (second (nth counter population)) elite-population
+			  :test #'equal :key #'second)))
        do (setf elite-population (append elite-population (list (nth counter population))))
        do (setf counter (1+ counter))
        finally (return elite-population))))
@@ -215,7 +216,8 @@
     (loop until (= (length mated-population) *90-percent-of-size*)
        do (setf offspring (mate (random-top-fifty-candidate population)
 				(random-top-fifty-candidate population)))
-       when (not (member offspring mated-population :test #'equal :key #'second))
+       when (and (not (guessed-alreadyp offspring))
+		 (not (member offspring mated-population :test #'equal :key #'second)))
        do (setf mated-population (append mated-population (list (list 0 offspring))))
 	 finally (return mated-population))))
   
@@ -323,7 +325,7 @@
 	     
 	     (setf new-population (generation-loop *previous-population*))
 	     (setf *previous-population* new-population)
-	     (setf new-population (remove-if #'guessed-alreadyp new-population))
+	     (setf new-population new-population)
 	     
 	     ;; (print "Guesses: ")
 	     ;; (print *guesses*)
