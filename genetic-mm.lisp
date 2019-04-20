@@ -203,7 +203,7 @@
   (let (elite-population counter)
     (setf counter 1)
     (loop until (= (length elite-population) *10-percent-of-size*)
-       when (and (not (guessed-alreadyp (second (nth counter population))))
+       when (and (not (guessed-alreadyp (nth counter population)))
 		 (not (member (second (nth counter population)) elite-population
 			  :test #'equal :key #'second)))
        do (setf elite-population (append elite-population (list (nth counter population))))
