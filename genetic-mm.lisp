@@ -82,7 +82,15 @@
 ;; Choose random gene
 (defun mutation ()
     (nth (random (length *colors*)) *colors*))
-       
+
+;; Low chance of invervsion, swaps two genes at random
+(defun inversion (offspring prob)
+  (let ((random-spot1 (random (length offspring)))
+	(random-spot2 (random (length offspring))))
+    (if (>= prob 990)
+	(setf (nth random-spot1 offspring) (nth random-spot2 offspring)))
+	offspring))
+
 ;; Mate two guesses and produce an offspring using crossover
 (defun mate (parent1 parent2)
   (let (prob)
@@ -90,11 +98,12 @@
        for parent2-gene in (second parent2)
        do (setf prob (random 999))
        if (< prob 490)
-       collect parent1-gene
+       collect parent1-gene into offspring
        if (and (>= prob 490) (< prob 980))
-       collect parent2-gene
+       collect parent2-gene into offspring
        if (>= prob 980)
-       collect (mutation))))
+       collect (mutation) into offspring
+       finally(return (inversion offspring prob)))))
   
 
 ;; Create a candidate/candidate using genes (colors) at random
@@ -282,13 +291,13 @@
 	     (setf *10-percent-of-size* (* 10 (/ *max-size* 100)))
 	     (setf *90-percent-of-size* (* 90 (/ *max-size* 100))) 
 	     (setf *50-percent-of-size* (* 50 (/ *max-size* 100)))
-	     (setf *max-generations* 100)
+	     (setf *max-generations* 300)
 	     (setf *max-size* 60)
 	     (setf *population-size* 150)
 	     (setf *colors* colors)
 	     (setf *board* board)
 	     (setf *weight-a* 1)
-	     (setf *weight-b* 1)
+	     (setf *weight-b* 2)
 	     (setf *turns-played* 0)
 	     
 	     ;; Get the fitness from last-response, place it at (FITNESS (guess))
