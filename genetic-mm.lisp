@@ -357,7 +357,7 @@
 	     ;(print last-response)
 	     ;; iterate turn counter
 	     (setf *turns-played* (1+ *turns-played*))
-	     (format t "Score for above guess: ~a~%" last-response)
+	     ;(format t "Score for above guess: ~a~%" last-response)
 	     ;; Give last guess its result)
 	     ;; ... Push white pegs
 	     (push (second last-response) (first *guesses*))
@@ -378,13 +378,13 @@
 
 	     ;; Extra info: New population
 	     ;; (print "")
-	     (format t "~%New population:")
-	     (loop for i in new-population
-	    	do (print i))
+	     ;(format t "~%New population:")
+	     ;(loop for i in new-population
+	    	;do (print i))
 	     
 	     ;; (setf best-guess (choose-best-guess new-population))
 	     (push (list (second (first new-population))) *guesses*)
-	     (format t "~%BEST GUESS CHOSEN: ~a~%" best-guess)
+	     ;(format t "~%BEST GUESS CHOSEN: ~a~%" best-guess)
 
 	     ;; debug
 	     ;; (print *guesses*)
