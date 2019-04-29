@@ -352,7 +352,7 @@
 	     (first (first *guesses*)))))
 	(T
 	 (progn
-	   (let (new-population best-guess)
+	   (let (new-population); best-guess)
 	     ;(print (first (first *guesses*)))
 	     ;(print last-response)
 	     ;; iterate turn counter
