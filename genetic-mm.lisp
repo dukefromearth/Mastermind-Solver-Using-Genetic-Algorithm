@@ -158,9 +158,8 @@
      finally (return tally)))
 
 
-;; Assess candidate score playing against guess
-;; Returns candidate score in this format: (blackpegs whitepegs)
-;; Modfied function based on "process-guess" method by Professor Susan Epstein
+;; Testing
+
 (defun process-candidate-with-guess (candidate guess)
   (loop with answer = candidate
      with guess-color-count = (count-color guess)
@@ -174,13 +173,49 @@
      and do (decf (aref guess-color-count (spot entry)))
      and do (decf (aref true-color-count (spot entry)))
      finally (progn
-         ;(print answer)
-         (return (list exact-counter (loop for i from 0 to (1- (length *colors*))
-              for guessed = (aref true-color-count i)
-              for true = (aref guess-color-count i)
-              when (<= true guessed)
-              sum true
-              else sum guessed))))))
+					;(print answer)
+	       (return (list exact-counter (loop for i from 0 to (1- (length *colors*))
+					      for guessed = (aref true-color-count i)
+					      for true = (aref guess-color-count i)
+					      when (<= true guessed)
+					      sum true
+					      else sum guessed))))))
+
+
+;; Assess candidate score playing against guess
+;; Returns candidate score in this format: (blackpegs whitepegs)
+;; Modfied function based on "process-guess" method by Professor Susan Epstein
+;; (defun process-candidate-with-guess (guess answer)
+;;   (loop with guess-color-count = (count-color guess)
+;;      with true-color-count = (count-color answer)
+;;      with exact-counter = 0
+;;      for entry in guess
+;;      for peg in answer
+;;      for exact = (equal entry peg)
+;;      when exact 
+;;      do (incf exact-counter)
+;;      and do (decf (aref guess-color-count (spot-color entry)))
+;;      and do (decf (aref true-color-count (spot-color entry)))
+;;      finally (return (list exact-counter (loop for i from 0 to (1- (length *colors*))
+;; 					    for guessed = (aref true-color-count i)
+;; 					    for true = (aref guess-color-count i)
+;; 					    when (<= true guessed)
+;; 					    sum true
+;; 					    else sum guessed)))))
+
+;; TESTING
+
+;; (defun compare-two-lists (ls1 ls2)
+;;   (let ((black-pegs 0) (white-pegs 0))
+;;     (loop for color1 in ls1
+;;        for color2 in ls2
+;;        do (if (eq color1 color2)
+;; 	      (setf black-pegs (1+ black-pegs))
+;; 	      (if (listp (member color1 ls2))
+;; 		  (setf white-pegs (1+ white-pegs))))
+;;        finally (return (list black-pegs white-pegs)))))
+
+
 
 ;; Calculate difference of black pegs of candidate c with previous guesses
 (defun summate-black-peg-difference (candidate)
@@ -335,8 +370,8 @@
 	     ;; (print (first *guesses*))
 	     
 	     (setf new-population (generation-loop *previous-population*))
-	     (setf *previous-population* new-population)
-	     
+	     (setf *previous-population* (remove-duplicate-candidates (remove-if #'guessed-alreadyp new-population)))
+	     (setf new-population (remove-if #'guessed-alreadyp new-population))
 	     ;; (print "Guesses: ")
 	     ;; (print *guesses*)
 	     ;; (print "New:")
@@ -347,8 +382,8 @@
 	     (loop for i in new-population
 	    	do (print i))
 	     
-	     (setf best-guess (choose-best-guess new-population))
-	     (push best-guess *guesses*)
+	     ;; (setf best-guess (choose-best-guess new-population))
+	     (push (list (second (first new-population))) *guesses*)
 	     (format t "~%BEST GUESS CHOSEN: ~a~%" best-guess)
 
 	     ;; debug
