@@ -315,7 +315,7 @@
 (defun remove-duplicate-candidates (population) (remove-duplicates population :test #'equal :key #'second))
 
 ;; Main routine
-(defun genetic-agent (board colors SCSA last-response)
+(defun MoonlightPinkFlamingoes (board colors SCSA last-response)
   (declare (ignore SCSA))
   (cond ((null last-response) ;; First turn routine
 	 (progn
