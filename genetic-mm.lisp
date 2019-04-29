@@ -82,7 +82,15 @@
 ;; Choose random gene
 (defun mutation ()
     (nth (random (length *colors*)) *colors*))
-       
+
+;; Low chance of invervsion, swaps two genes at random
+(defun inversion (offspring prob)
+  (let ((random-spot1 (random (length offspring)))
+	(random-spot2 (random (length offspring))))
+    (if (>= prob 990)
+	(setf (nth random-spot1 offspring) (nth random-spot2 offspring)))
+	offspring))
+
 ;; Mate two guesses and produce an offspring using crossover
 (defun mate (parent1 parent2)
   (let (prob)
@@ -90,11 +98,12 @@
        for parent2-gene in (second parent2)
        do (setf prob (random 999))
        if (< prob 490)
-       collect parent1-gene
+       collect parent1-gene into offspring
        if (and (>= prob 490) (< prob 980))
-       collect parent2-gene
+       collect parent2-gene into offspring
        if (>= prob 980)
-       collect (mutation))))
+       collect (mutation) into offspring
+       finally(return (inversion offspring prob)))))
   
 
 ;; Create a candidate/candidate using genes (colors) at random
@@ -149,12 +158,11 @@
      finally (return tally)))
 
 
-;; Assess candidate score playing against guess
-;; Returns candidate score in this format: (blackpegs whitepegs)
-;; Modfied function based on "process-guess" method by Professor Susan Epstein
+;; Testing
+
 (defun process-candidate-with-guess (candidate guess)
-  (loop with answer = guess
-     with guess-color-count = (count-color candidate)
+  (loop with answer = candidate
+     with guess-color-count = (count-color guess)
      with true-color-count = (count-color answer)
      with exact-counter = 0
      for entry in guess
@@ -162,14 +170,52 @@
      for exact = (equal entry peg)
      when exact 
      do (incf exact-counter)
-     and do (decf (aref guess-color-count (spot-color entry)))
-     and do (decf (aref true-color-count (spot-color entry)))
-     finally (return (list exact-counter (loop for i from 0 to (1- (length *colors*))
-					    for guessed = (aref true-color-count i)
-					    for true = (aref guess-color-count i)
-					    when (<= true guessed)
-					    sum true
-					    else sum guessed)))))
+     and do (decf (aref guess-color-count (spot entry)))
+     and do (decf (aref true-color-count (spot entry)))
+     finally (progn
+					;(print answer)
+	       (return (list exact-counter (loop for i from 0 to (1- (length *colors*))
+					      for guessed = (aref true-color-count i)
+					      for true = (aref guess-color-count i)
+					      when (<= true guessed)
+					      sum true
+					      else sum guessed))))))
+
+
+;; Assess candidate score playing against guess
+;; Returns candidate score in this format: (blackpegs whitepegs)
+;; Modfied function based on "process-guess" method by Professor Susan Epstein
+;; (defun process-candidate-with-guess (guess answer)
+;;   (loop with guess-color-count = (count-color guess)
+;;      with true-color-count = (count-color answer)
+;;      with exact-counter = 0
+;;      for entry in guess
+;;      for peg in answer
+;;      for exact = (equal entry peg)
+;;      when exact 
+;;      do (incf exact-counter)
+;;      and do (decf (aref guess-color-count (spot-color entry)))
+;;      and do (decf (aref true-color-count (spot-color entry)))
+;;      finally (return (list exact-counter (loop for i from 0 to (1- (length *colors*))
+;; 					    for guessed = (aref true-color-count i)
+;; 					    for true = (aref guess-color-count i)
+;; 					    when (<= true guessed)
+;; 					    sum true
+;; 					    else sum guessed)))))
+
+;; TESTING
+
+;; (defun compare-two-lists (ls1 ls2)
+;;   (let ((black-pegs 0) (white-pegs 0))
+;;     (loop for color1 in ls1
+;;        for color2 in ls2
+;;        do (if (eq color1 color2)
+;; 	      (setf black-pegs (1+ black-pegs))
+;; 	      (if (listp (member color1 ls2))
+;; 		  (setf white-pegs (1+ white-pegs))))
+;;        finally (return (list black-pegs white-pegs)))))
+
+
 
 ;; Calculate difference of black pegs of candidate c with previous guesses
 (defun summate-black-peg-difference (candidate)
@@ -282,13 +328,13 @@
 	     (setf *10-percent-of-size* (* 10 (/ *max-size* 100)))
 	     (setf *90-percent-of-size* (* 90 (/ *max-size* 100))) 
 	     (setf *50-percent-of-size* (* 50 (/ *max-size* 100)))
-	     (setf *max-generations* 100)
+	     (setf *max-generations* 300)
 	     (setf *max-size* 60)
 	     (setf *population-size* 150)
 	     (setf *colors* colors)
 	     (setf *board* board)
 	     (setf *weight-a* 1)
-	     (setf *weight-b* 1)
+	     (setf *weight-b* 2)
 	     (setf *turns-played* 0)
 	     
 	     ;; Get the fitness from last-response, place it at (FITNESS (guess))
@@ -306,12 +352,12 @@
 	     (first (first *guesses*)))))
 	(T
 	 (progn
-	   (let (new-population best-guess)
+	   (let (new-population); best-guess)
 	     ;(print (first (first *guesses*)))
 	     ;(print last-response)
 	     ;; iterate turn counter
 	     (setf *turns-played* (1+ *turns-played*))
-	     (format t "Score for above guess: ~a~%" last-response)
+	     ;(format t "Score for above guess: ~a~%" last-response)
 	     ;; Give last guess its result)
 	     ;; ... Push white pegs
 	     (push (second last-response) (first *guesses*))
@@ -324,21 +370,21 @@
 	     ;; (print (first *guesses*))
 	     
 	     (setf new-population (generation-loop *previous-population*))
-	     (setf *previous-population* new-population)
-	     
+	     (setf *previous-population* (remove-duplicate-candidates (remove-if #'guessed-alreadyp new-population)))
+	     (setf new-population (remove-if #'guessed-alreadyp new-population))
 	     ;; (print "Guesses: ")
 	     ;; (print *guesses*)
 	     ;; (print "New:")
 
 	     ;; Extra info: New population
 	     ;; (print "")
-	     (format t "~%New population:")
-	     (loop for i in new-population
-	    	do (print i))
+	     ;(format t "~%New population:")
+	     ;(loop for i in new-population
+	    	;do (print i))
 	     
-	     (setf best-guess (choose-best-guess new-population))
-	     (push best-guess *guesses*)
-	     (format t "~%BEST GUESS CHOSEN: ~a~%" best-guess)
+	     ;; (setf best-guess (choose-best-guess new-population))
+	     (push (list (second (first new-population))) *guesses*)
+	     ;(format t "~%BEST GUESS CHOSEN: ~a~%" best-guess)
 
 	     ;; debug
 	     ;; (print *guesses*)
