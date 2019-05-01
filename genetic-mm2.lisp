@@ -415,8 +415,10 @@
 	     (setf new-population *previous-population*)
 
 	     ;; (setf new-population (remove-if #'guessed-alreadyp new-population))
-	     (loop for n-gen upto *max-generations*
-		do (setf new-population (new-gen-loop new-population)))
+	     (let ((count 0))
+	       (loop until (or (>= count *max-generations*) (>= (length *eligible-set*) *max-size*))
+		  do (setf new-population (new-gen-loop new-population))
+		  do (setf count (1+ count))))
 
 	     (setf *eligible-set* (remove-duplicates *eligible-set* :test #'equal))
 	     
