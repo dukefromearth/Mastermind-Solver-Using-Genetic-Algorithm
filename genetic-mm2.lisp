@@ -353,7 +353,8 @@
 
 ;; Main routine
 (defun MoonlightPinkFlamingoes (board colors SCSA last-response)
-  (cond ((null last-response) ;; First turn routine
+    (declare (ignore SCSA))
+    (cond ((null last-response) ;; First turn routine
 	 (progn
 	   (let (guess)
 	     ;; Clear previously saved values
@@ -364,8 +365,8 @@
 	     (setf *10-percent-of-size* (* 10 (/ *max-size* 100)))
 	     (setf *90-percent-of-size* (* 90 (/ *max-size* 100))) 
 	     (setf *50-percent-of-size* (* 50 (/ *max-size* 100)))
-	     (setf *max-generations* 40)
-	     (setf *max-size* 50)
+	     (setf *max-generations* 150)
+	     (setf *max-size* 60)
 	     (setf *population-size* 150)
 	     (setf *colors* colors)
 	     (setf *board* board)
@@ -373,9 +374,8 @@
 	     (setf *weight-b* 2)
 	     (setf *turns-played* 0)
 	     (setf *elite-percent* 0.1)
-
-	     (if (equal SCSA 'ab-color)
-		 (setf *colors* '(A B)))
+	     (setf *eligible-set* nil)
+	     
 	     ;; Get the fitness from last-response, place it at (FITNESS (guess))
 	     (if (and (= board 4) (= (length colors) 6))
 		 (setf guess '(A A B C))
