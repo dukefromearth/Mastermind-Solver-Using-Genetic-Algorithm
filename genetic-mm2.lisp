@@ -1,6 +1,6 @@
 ;; Team name:    Moonlight Pink Flamingoes
 ;; Date created: April 8th, 2019
-;; Description: Genetic algorithm implementation for Mastermind based on the paper "Efficient solutions for Mastermind using genetic algorithms" by Berghman, Goossens, and Leus.
+;; Description: Genetic algorithm implementation for Mastermind based on the paper "Efficient solutions for Mastermind using genetic algorithms" by Berghman, Goossens, and Leus
 
 
 ;;;; Symbol list
@@ -399,51 +399,39 @@
 	     (format nil "Last guess ~a" (first (first *guesses*)))
 	     
 	     (setf *turns-played* (1+ *turns-played*))
-	     ;; ... Push white pegs
+	     
+	     ;; Push white pegs then black pegs
 	     (push (second last-response) (first *guesses*))
-	     ;; ... Push black pegs
 	     (push (first last-response) (first *guesses*))
 
 	     (print *last-guess*)
 	     (print last-response)
-	     ;(print *eligible-set*)
-	     ;(break)
-	     ;; (setf new-population (generation-loop *last-guess* last-response (subseq *previous-population* 0 *population-size*)))
-
-	     ;; ;(print "New-pop")
-	     ;; ;(format t "~{~{~A ~}~%~}" (subseq new-population 0 20))
 	     
 	     (setf new-population *previous-population*)
-
-	     ;; (setf new-population (remove-if #'guessed-alreadyp new-population))
+	     (setf *eligible-set* nil)
+	     
+	     ;; Generation loop continues until max generations or *eligible-set* is *max-size*
 	     (let ((count 0))
 	       (loop until (or (>= count *max-generations*) (>= (length *eligible-set*) *max-size*))
 		  do (setf new-population (new-gen-loop new-population))
 		  do (setf count (1+ count))))
 
+	     ;; Remove duplicates from the *eligible-set*
 	     (setf *eligible-set* (remove-duplicates *eligible-set* :test #'equal))
-	     
+
+	     ;; If the size of *eligible-set* is big enough, pick the best guess, otherwise pick most elite
 	     (cond
 	       ((< (length *eligible-set*) 2)
 		(progn
-		  (print "eligible")
+		  (print "elite")
 		  (push (list (first new-population)) *guesses*)))
 	       (T
 		(progn
-		(print "elite")
+		(print "eligible")
 		(push (choose-best-guess *eligible-set*) *guesses*))))
-	     
-
-	     (setf *last-guess* (first (first *guesses*)))
-	     (print *last-guess*)
-	     ;(break)
 	     
 	     (setf *previous-population* (remove-duplicates new-population :test #'equal))
 
-		 
-	     ;; (print "last guess")
-	     ;; (print *last-guess*)
-	     
-	     
 	     ;; Play guess at top of pile (the most elite)
+	     (setf *last-guess* (first (first *guesses*)))
 	     (first (first *guesses*)))))))
