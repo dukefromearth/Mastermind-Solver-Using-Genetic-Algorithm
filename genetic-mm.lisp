@@ -357,19 +357,26 @@
 	     (setf *SCSA-constraints* t)
 	     (setf *number-of-colors-initial* (+ (length *colors*) 1))
 
-	     ;; SCSA: TWO-COLOR
-	     ;; Initial guess for two-color SCSA is a solid color guess using the first
-	     ;; color in *colors*
-	     ;; Most effective (does not inflate total guess count unneccesarily)
-	     (if (and (equal SCSA 'two-color)
-		      (>= *board* 12)
-		      (>= (length *colors*) 14))
-		 (progn
-		   (setf guess (make-list *board* :initial-element 'A)))
-		 (progn
-		   (setf guess (second (create-gene-sequence)))
-		   (setf *SCSA-constraints* t)))
+	     ;; SCSA initialization cond table
+	     (cond
+	       ;; SCSA: TWO-COLOR
+	       ;; Initial guess for two-color SCSA is a solid color guess using the first
+	       ;; color in *colors*
+	       ;; Most effective (does not inflate total guess count unneccesarily) in higher peg/color combos
+	       ((and (equal SCSA 'two-color) (>= *board* 12) (>= (length *colors*) 14))
+		(setf guess (make-list *board* :initial-element 'A)))
 
+	       ;; SCSA: USUALLY-FEWER
+	       ;; Initial guess for usually-fewer is a solid color guess using first color in *colors*
+	       ;; Most effective in higher peg/color combos
+	       ((and (equal SCSA 'usually-fewer) (>= *board* 12) (>= (length *colors*) 14))
+		(setf guess (make-list *board* :initial-element 'A)))
+
+	       ;; If SCSA is has not implementation/not needed for board/size combo, return rando
+	       (t
+		(setf guess (second (create-gene-sequence)))
+		(setf *SCSA-constraints* t)))
+	     
 	     ;; After SCSA has it's first guess, send it
 	     guess)))
 
@@ -378,9 +385,26 @@
 	;;---------------------------------------------------------------
 	
 	;; SCSA: TWO-COLOR
-	;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*
+	;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
+	;;              Keep removing until only two colors left.
 	((and (equal SCSA 'two-color)
 	      (not (eq (length *colors*) 2))) (progn
+						(if (and (eq 0 (first last-response))
+							 (eq 0 (second last-response)))
+						    (setf *colors* (remove (first *colors*) *colors*))
+						    (progn
+						      (setf *colors* (append *colors* (list (first *colors*))))
+						      (setf *colors* (remove (first *colors*) *colors* :count 1))))
+						(print *colors*)
+						(make-list *board* :initial-element (first *colors*))))
+
+	;; SCSA: USUALLY-FEWER
+	;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
+	;;              Keep removing until 3 colors left. Although SCSA has possibility to generate 2 colors,
+	;;              the complexity and guesses used raises to pinpoint exact number, therefore settle with
+	;;              restricted domain of 3 colors.
+	((and (equal SCSA 'usually-fewer)
+	      (not (eq (length *colors*) 3))) (progn
 						(if (and (eq 0 (first last-response))
 							 (eq 0 (second last-response)))
 						    (setf *colors* (remove (first *colors*) *colors*))
