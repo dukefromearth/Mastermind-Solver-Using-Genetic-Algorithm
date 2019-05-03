@@ -364,6 +364,12 @@
 	     (setf *SCSA-constraints* t)
 	     (setf *number-of-colors-initial* (+ (length *colors*) 1))
 
+	     ;; Adjust max population size and generations to avoid excessively looping
+	     ;; when not necessary in higher peg/color combos
+	     (cond ((>= 12 *board*) (progn (setf *max-size* 30) (setf *max-generations* 40)))
+		   ((>= 10 *board*) (progn (setf *max-size* 40) (setf *max-generations* 50)))
+		   (t nil))
+
 	     ;; SCSA initialization cond table
 	     (cond
 	       ;; SCSA: TWO-COLOR
