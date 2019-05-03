@@ -342,10 +342,10 @@
 ;; MAIN ROUTINE
 ;;------------------------------------------------------
 (defun MoonlightPinkFlamingoes (board colors SCSA last-response)
-  ;; First turn
-  (cond ((null last-response) 
-	 (progn
-	   (let (guess)
+  (let (guess)
+    ;; First turn
+    (cond ((null last-response) 
+	   (progn
 	     ;; Clear previously saved values
 	     ;; Initialize and clear main variables
 	     (setf *previous-population* nil)
@@ -396,135 +396,193 @@
 	       (t
 		(setf guess (second (create-gene-sequence)))
 		(setf *SCSA-constraints* t)))
+
+	     ;; Record guess
+	     (push (list guess) *guesses*)
 	     
 	     ;; After SCSA has it's first guess, send it
-	     guess)))
+	     guess))
 
-	;;---------------------------------------------------------------
-	;; SCSA CONSTRAINTS
-	;;---------------------------------------------------------------
-	
-	;; SCSA: TWO-COLOR
-	;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
-	;;              Keep removing until only two colors left.
-	((and (equal SCSA 'two-color)
-	      (not (eq (length *colors*) 2)))
-	 (progn
-	   ;; If last response was a total of 0, color not present in answer, therefore remove
-	   (if (and (eq 0 (first last-response))
-		    (eq 0 (second last-response)))
-	       (setf *colors* (remove (first *colors*) *colors*))
-	       (progn
-		 ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
-		 ;; and prepare next color to test
-		 (setf *colors* (append *colors* (list (first *colors*))))
-		 (setf *colors* (remove (first *colors*) *colors* :count 1))))
+    ;;---------------------------------------------------------------
+    ;; SCSA CONSTRAINTS
+    ;;---------------------------------------------------------------
+    
+    ;; SCSA: TWO-COLOR
+    ;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
+    ;;              Keep removing until only two colors left.
+    ((and (equal SCSA 'two-color)
+	  (not (eq (length *colors*) 2)))
+     (progn
+       ;; If last response was a total of 0, color not present in answer, therefore remove
+       (if (and (eq 0 (first last-response))
+		(eq 0 (second last-response)))
+	   (progn
+	     ;; Remove color
+	     (setf *colors* (remove (first *colors*) *colors*)))
+	   (progn
+	     ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
+	     ;; and prepare next color to test
+	     ;; Move color to back of *colors*
+	     (setf *colors* (append *colors* (list (first *colors*))))
+	     (setf *colors* (remove (first *colors*) *colors* :count 1))))
 
-	   ;; DEBUG
-	   ;;(print *colors*)
+       ;; Retrieve score from previous guess
+       ;; ... Push white pegs
+       (push (second last-response) (first *guesses*))
+       ;; ... Push black pegs
+       (push (first last-response) (first *guesses*))
+       
+       ;; DEBUG
+       ;;(print *colors*)
 
-	   ;; Construct and send a solid color guess using current first element of *colors*
-	   (make-list *board* :initial-element (first *colors*))))
+       ;; Construct and send a solid color guess using current first element of *colors*
+       (setf guess (make-list *board* :initial-element (first *colors*)))
 
-	;; SCSA: USUALLY-FEWER
-	;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
-	;;              Keep removing until 3 colors left. Although SCSA has possibility to generate
-	;;              2 colors, the complexity and guesses used raises to pinpoint exact number,
-	;;              therefore settle with
-	;;              restricted domain of 3 colors.
-	((and (equal SCSA 'usually-fewer)
-	      (not (eq (length *colors*) 3)))
-	 (progn
-	   ;; If last response was a total of 0, color not present in answer, therefore remove
-	   (if (and (eq 0 (first last-response))
-		    (eq 0 (second last-response)))
-	       (setf *colors* (remove (first *colors*) *colors*))
-	       (progn
-		 ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
-		 ;; and prepare next color to test
-		 (setf *colors* (append *colors* (list (first *colors*))))
-		 (setf *colors* (remove (first *colors*) *colors* :count 1))))
-	   ;; DEBUG
-	   ;; (print *colors*)
-	   (make-list *board* :initial-element (first *colors*))))
+       ;; Record guess
+       (push (list guess) *guesses*)
+       
+       ;; Send guess
+       guess))
 
-	;; SCSA: PREFER-FEWER
-	;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
-	;;              Keep removing until 3 colors left. Although SCSA has possibility to generate
-	;;              5 or less, the complexity and guesses used raises to pinpoint exact number,
-	;;              therefore settle with 5 or make random guesses until 100 guess limit is
-	;;              reached (no auto-disqualify for guess limit)
-	((and (equal SCSA 'prefer-fewer)
-	      (not (eq (length *colors*) 5)))
-	 (progn
-	   (if (and (eq 0 (first last-response))
-		    (eq 0 (second last-response)))
-	       (setf *colors* (remove (first *colors*) *colors*))
-	       (progn
-		 (setf *colors* (append *colors* (list (first *colors*))))
-		 (setf *colors* (remove (first *colors*) *colors* :count 1))))
-	   ;; DEBUG
-	   ;; (print *colors*)
+    ;; SCSA: USUALLY-FEWER
+    ;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
+    ;;              Keep removing until 3 colors left. Although SCSA has possibility to generate
+    ;;              2 colors, the complexity and guesses used raises to pinpoint exact number,
+    ;;              therefore settle with
+    ;;              restricted domain of 3 colors.
+    ((and (equal SCSA 'usually-fewer)
+	  (not (eq (length *colors*) 3)))
+     (progn
+       ;; If last response was a total of 0, color not present in answer, therefore remove
+       (if (and (eq 0 (first last-response))
+		(eq 0 (second last-response)))
+	   (progn
+	     ;; Remove color
+	     (setf *colors* (remove (first *colors*) *colors*)))
+	   (progn
+	     ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
+	     ;; and prepare next color to test
 
-	   ;; Construct and send a solid color guess using current first element of *colors*
-	   (make-list *board* :initial-element (first *colors*))))
+	     ;; Move color to back
+	     (setf *colors* (append *colors* (list (first *colors*))))
+	     (setf *colors* (remove (first *colors*) *colors* :count 1))))
 
-	;; After all SCSA conditions are satisfied, move on to genetic algorithm (general player)
-	(T
-	 (progn
-	   (let (new-population guess)
-	     ;; If SCSA constraints were applied, ignore all previous guesses and start main algoritm
-	     ;; here using genetic-algorithm
-	     (if (equal *SCSA-constraints* 't)
-		 (progn
-		   ;; Flag was received, set to nil to allow routine to proceed to genetic algorithm
-		   (setf *SCSA-constraints* nil)
-		   ;; Set guess to a randomly generated sequence using *colors* and *board*
-		   (setf guess (second (create-gene-sequence)))
-		   ;; Keep track of this as a guesss
-		   (push (list guess) *guesses*)
-		   ;; Prepare initial population for the algorithm
-		   (setf *previous-population* (initialize-population))
-		   ;; Send guess
-		   guess)
-		 (progn
-		   ;; DEBUG
-		   ;;(print last-response)
-		   ;;(format t "~%Score for above guess: ~a~%" last-response)
+       ;; Retrieve score from previous guess
+       ;; ... Push white pegs
+       (push (second last-response) (first *guesses*))
+       ;; ... Push black pegs
+       (push (first last-response) (first *guesses*))
+       
+       ;; DEBUG
+       ;; (print *colors*)
 
-		   ;; iterate turn counter
-		   (setf *turns-played* (1+ *turns-played*))
-		   ;; Give last guess its result)
-		   ;; ... Push white pegs
-		   (push (second last-response) (first *guesses*))
-		   ;; ... Push black pegs
-		   (push (first last-response) (first *guesses*))
+       ;; Construct next guess
+       (setf guess (make-list *board* :initial-element (first *colors*)))
+
+       ;; Record next guess
+       (push (list guess) *guesses*)
+       
+       ;; Send guess
+       guess))
+
+    ;; SCSA: PREFER-FEWER
+    ;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
+    ;;              Keep removing until 3 colors left. Although SCSA has possibility to generate
+    ;;              5 or less, the complexity and guesses used raises to pinpoint exact number,
+    ;;              therefore settle with 5 or make random guesses until 100 guess limit is
+    ;;              reached (no auto-disqualify for guess limit)
+    ((and (equal SCSA 'prefer-fewer)
+	  (not (eq (length *colors*) 5)))
+     (progn
+       (if (and (eq 0 (first last-response))
+		(eq 0 (second last-response)))
+	   (progn
+	     ;; Remove color
+	     (setf *colors* (remove (first *colors*) *colors*)))
+	   (progn
+	     ;; Move to back
+	     (setf *colors* (append *colors* (list (first *colors*))))
+	     (setf *colors* (remove (first *colors*) *colors* :count 1))))
+       ;; DEBUG
+       ;; (print *colors*)
+
+       ;; Retrieve score from previous guess
+       ;; ... Push white pegs
+       (push (second last-response) (first *guesses*))
+       ;; ... Push black pegs
+       (push (first last-response) (first *guesses*))
+       
+       ;; Construct and send a solid color guess using current first element of *colors*
+       (setf guess (make-list *board* :initial-element (first *colors*)))
+
+       ;; Record guess
+       (push (list guess) *guesses*)
+
+       ;; Send guess
+       guess))
+    
+    ;; After all SCSA conditions are satisfied, move on to genetic algorithm (general player)
+    (T
+     (progn
+       (let (new-population)
+	 ;; If SCSA constraints were applied, ignore all previous guesses and start main algoritm
+	 ;; here using genetic-algorithm
+	 (if (equal *SCSA-constraints* 't)
+	     (progn
+	       ;; Retrieve score for previous score
+	       ;; ... Push white pegs
+	       (push (second last-response) (first *guesses*))
+	       ;; ... Push black pegs
+	       (push (first last-response) (first *guesses*))
+	       
+	       ;; Flag was received, set to nil to allow routine to proceed to genetic algorithm
+	       (setf *SCSA-constraints* nil)
+	       ;; Set guess to a randomly generated sequence using *colors* and *board*
+	       (setf guess (second (create-gene-sequence)))
+	       ;; Keep track of this as a guesss
+	       (push (list guess) *guesses*)
+	       ;; Prepare initial population for the algorithm
+	       (setf *previous-population* (initialize-population))
+	       ;; Send guess
+	       guess)
+	     (progn
+	       ;; DEBUG
+	       ;;(print last-response)
+	       ;;(format t "~%Score for above guess: ~a~%" last-response)
+
+	       ;; iterate turn counter
+	       (setf *turns-played* (1+ *turns-played*))
+	       ;; Give last guess its result)
+	       ;; ... Push white pegs
+	       (push (second last-response) (first *guesses*))
+	       ;; ... Push black pegs
+	       (push (first last-response) (first *guesses*))
 
 
-		   ;; Set new-population to the resulting population of generation-loop
-		   ;; this population will have been mated the specified number of times
-		   (setf new-population (generation-loop *previous-population*))
+	       ;; Set new-population to the resulting population of generation-loop
+	       ;; this population will have been mated the specified number of times
+	       (setf new-population (generation-loop *previous-population*))
 
-		   ;; Record this new-population for use in diversifying next turns populations
-		   ;; Remove all duplicates and already guessed candidates, since they limit
-		   ;;  genetic diversity
-		   (setf *previous-population*
-			 (remove-duplicate-candidates (remove-if #'guessed-alreadyp new-population)))
+	       ;; Record this new-population for use in diversifying next turns populations
+	       ;; Remove all duplicates and already guessed candidates, since they limit
+	       ;;  genetic diversity
+	       (setf *previous-population*
+		     (remove-duplicate-candidates (remove-if #'guessed-alreadyp new-population)))
 
-		   ;; Record new-population and remove already guessed candidates (functions
-		   ;;  already duplicate check)
-		   (setf new-population (remove-if #'guessed-alreadyp new-population))
+	       ;; Record new-population and remove already guessed candidates (functions
+	       ;;  already duplicate check)
+	       (setf new-population (remove-if #'guessed-alreadyp new-population))
 
-		   ;; DEBUG
-		   ;; (format t "~%New population:")
-		   ;; (loop for i in new-population
-		   ;;    do (print i))
-		   
-		   ;; Set guess to the most fit candidate in new-population
-		   (setf guess (second (first new-population)))
+	       ;; DEBUG
+	       ;; (format t "~%New population:")
+	       ;; (loop for i in new-population
+	       ;;    do (print i))
+	       
+	       ;; Set guess to the most fit candidate in new-population
+	       (setf guess (second (first new-population)))
 
-		   ;; Push guess onto list of previous guesses
-		   (push (list guess) *guesses*)
+	       ;; Push guess onto list of previous guesses
+	       (push (list guess) *guesses*)
 
-		   ;; Guess has been chosen, send it to get scored
-		   guess)))))))
+	       ;; Guess has been chosen, send it to get scored
+	       guess))))))))
