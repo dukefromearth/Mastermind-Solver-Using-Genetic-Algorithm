@@ -408,6 +408,36 @@
 	       ((and (equal SCSA 'prefer-fewer) (>= *board* 12) (>= (length *colors*) 14))
 		(setf guess (make-list *board* :initial-element 'A)))
 
+	       ;; SCSA: MYSTERY-1
+	       ;; OBSERVABLE: Somewhat randomized SCSA selection
+	       ;;((and ()) ())
+	       
+	       ;; SCSA: MYSTERY-2
+	       ;; OBSERVABLE: Three colors alternating
+	       ;; Make initial guesses to limit the domain to three colors. Start with first color
+	       ;; in *colors* and make a solid color guess
+	       ((and (equal SCSA 'mystery-2) (>= *board* 12) (>= (length *colors*) 14))
+		(setf guess (make-list *board* :initial-element 'A)))
+	       
+	       ;; SCSA: MYSTERY-3
+	       ;; OBSERVABLE: Three colors
+	       ;; Make initial guesses to limit the domain to three colors. Start with first color
+	       ;; in *colors* and use that to make first solid color guess.
+	       ((and (equal SCSA 'mystery-3) (>= *board* 12) (>= (length *colors*) 14))
+		(setf guess (make-list *board* :initial-element 'A)))
+	       
+	       ;; SCSA: MYSTERY-4
+	       ;; OBSERVABLE: Four colors
+	       ;; Make initial guesses to limit the domain to four colors. Start with first color
+	       ;; in *colors* and make a solid color guess.
+	       ((and (equal SCSA 'mystery-4) (>= *board* 12) (>= (length *colors*) 14))
+		(setf guess (make-list *board* :initial-element 'A)))
+	       
+	       ;; SCSA: MYSTERY-5
+	       ;; OBSERVABLE: two-color-alternating
+	       ((and (equal SCSA 'mystery-5) (>= *board* 12) (>= (length *colors*) 14))
+		(setf guess (make-list *board* :initial-element 'A)))
+	       
 	       ;; If SCSA is has not implementation/not needed for board/size combo, return rando
 	       (t (progn
 		    (setf guess (second (create-gene-sequence)))
@@ -583,6 +613,170 @@
 
 	     ;; Send guess
 	     guess))
+
+	  ;; SCSA: MYSTERY-1 (too randomized, may be less complex for genetic to try unaided)
+	  ;; Constraints: nil
+
+	  
+	  ;; SCSA: MYSTERY-2
+	  ;; Constraints: Since the observable pattern is three colors alternating,
+	  ;;              limit the domain (colors) to 3
+	  ((and (>= *board* 12)
+		(>= (length *colors*) 14)
+		(equal SCSA 'mystery-2)
+		(not (eq (length *colors*) 3)))
+	   (progn
+	     ;; If last response was a total of 0, color not present in answer, therefore remove
+	     (if (and (eq 0 (first last-response))
+		      (eq 0 (second last-response)))
+		 (progn
+		   ;; Remove color
+		   (setf *colors* (remove (first *colors*) *colors*)))
+		 (progn
+		   ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
+		   ;; and prepare next color to test
+		   ;; Move color to back of *colors*
+		   (setf *colors* (append *colors* (list (first *colors*))))
+		   (setf *colors* (remove (first *colors*) *colors* :count 1))))
+
+	     ;; Retrieve score from previous guess
+	     ;; ... Push white pegs
+	     (push (second last-response) (first *guesses*))
+	     ;; ... Push black pegs
+	     (push (first last-response) (first *guesses*))
+	     
+	     ;; DEBUG
+	     ;;(print *colors*)
+
+	     ;; Construct and send a solid color guess using current first element of *colors*
+	     (setf guess (make-list *board* :initial-element (first *colors*)))
+
+	     ;; Record guess
+	     (push (list guess) *guesses*)
+	     
+	     ;; Send guess
+	     guess))
+
+
+	  ;; SCSA: MYSTERY-3
+	  ;; Constraints: Since the observable pattern is three colors.
+	  ;;              limit the domain (colors) to 3
+	  ((and (>= *board* 12)
+		(>= (length *colors*) 14)
+		(equal SCSA 'mystery-3)
+		(not (eq (length *colors*) 3)))
+	   (progn
+	     ;; If last response was a total of 0, color not present in answer, therefore remove
+	     (if (and (eq 0 (first last-response))
+		      (eq 0 (second last-response)))
+		 (progn
+		   ;; Remove color
+		   (setf *colors* (remove (first *colors*) *colors*)))
+		 (progn
+		   ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
+		   ;; and prepare next color to test
+		   ;; Move color to back of *colors*
+		   (setf *colors* (append *colors* (list (first *colors*))))
+		   (setf *colors* (remove (first *colors*) *colors* :count 1))))
+
+	     ;; Retrieve score from previous guess
+	     ;; ... Push white pegs
+	     (push (second last-response) (first *guesses*))
+	     ;; ... Push black pegs
+	     (push (first last-response) (first *guesses*))
+	     
+	     ;; DEBUG
+	     ;;(print *colors*)
+
+	     ;; Construct and send a solid color guess using current first element of *colors*
+	     (setf guess (make-list *board* :initial-element (first *colors*)))
+
+	     ;; Record guess
+	     (push (list guess) *guesses*)
+	     
+	     ;; Send guess
+	     guess))
+
+
+	  ;; SCSA: MYSTERY-4
+	  ;; Constraints: Since the observable pattern is 4 colors,
+	  ;;              limit the domain (colors) to 4
+	  ((and (>= *board* 12)
+		(>= (length *colors*) 14)
+		(equal SCSA 'mystery-4)
+		(not (eq (length *colors*) 3)))
+	   (progn
+	     ;; If last response was a total of 0, color not present in answer, therefore remove
+	     (if (and (eq 0 (first last-response))
+		      (eq 0 (second last-response)))
+		 (progn
+		   ;; Remove color
+		   (setf *colors* (remove (first *colors*) *colors*)))
+		 (progn
+		   ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
+		   ;; and prepare next color to test
+		   ;; Move color to back of *colors*
+		   (setf *colors* (append *colors* (list (first *colors*))))
+		   (setf *colors* (remove (first *colors*) *colors* :count 1))))
+
+	     ;; Retrieve score from previous guess
+	     ;; ... Push white pegs
+	     (push (second last-response) (first *guesses*))
+	     ;; ... Push black pegs
+	     (push (first last-response) (first *guesses*))
+	     
+	     ;; DEBUG
+	     ;;(print *colors*)
+
+	     ;; Construct and send a solid color guess using current first element of *colors*
+	     (setf guess (make-list *board* :initial-element (first *colors*)))
+
+	     ;; Record guess
+	     (push (list guess) *guesses*)
+	     
+	     ;; Send guess
+	     guess))
+
+
+	  ;; SCSA: MYSTERY-5
+	  ;; Constraints: Since the observable pattern is two colors alternating,
+	  ;;              limit the domain (colors) to 2
+	  ((and (>= *board* 12)
+		(>= (length *colors*) 14)
+		(equal SCSA 'mystery-5)
+		(not (eq (length *colors*) 3)))
+	   (progn
+	     ;; If last response was a total of 0, color not present in answer, therefore remove
+	     (if (and (eq 0 (first last-response))
+		      (eq 0 (second last-response)))
+		 (progn
+		   ;; Remove color
+		   (setf *colors* (remove (first *colors*) *colors*)))
+		 (progn
+		   ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
+		   ;; and prepare next color to test
+		   ;; Move color to back of *colors*
+		   (setf *colors* (append *colors* (list (first *colors*))))
+		   (setf *colors* (remove (first *colors*) *colors* :count 1))))
+
+	     ;; Retrieve score from previous guess
+	     ;; ... Push white pegs
+	     (push (second last-response) (first *guesses*))
+	     ;; ... Push black pegs
+	     (push (first last-response) (first *guesses*))
+	     
+	     ;; DEBUG
+	     ;;(print *colors*)
+
+	     ;; Construct and send a solid color guess using current first element of *colors*
+	     (setf guess (make-list *board* :initial-element (first *colors*)))
+
+	     ;; Record guess
+	     (push (list guess) *guesses*)
+	     
+	     ;; Send guess
+	     guess))
+
 	  
 	  ;; After all SCSA conditions are satisfied, move on to genetic algorithm (general player)
 	  (T
