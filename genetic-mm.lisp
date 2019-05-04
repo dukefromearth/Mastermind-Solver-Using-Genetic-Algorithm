@@ -720,7 +720,7 @@
 	  ((and (>= *board* 12)
 		(>= *number-of-colors-initial* 14)
 		(equal SCSA 'mystery-4)
-		(not (eq (length *colors*) 3)))
+		(not (eq (length *colors*) 4)))
 	   (progn
 	     ;; If last response was a total of 0, color not present in answer, therefore remove
 	     (if (and (eq 0 (first last-response))
@@ -760,7 +760,7 @@
 	  ((and (>= *board* 12)
 		(>= *number-of-colors-initial* 14)
 		(equal SCSA 'mystery-5)
-		(not (eq (length *colors*) 3)))
+		(not (eq (length *colors*) 2)))
 	   (progn
 	     ;; If last response was a total of 0, color not present in answer, therefore remove
 	     (if (and (eq 0 (first last-response))
