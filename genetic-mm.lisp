@@ -226,7 +226,7 @@
      and do (decf (aref guess-color-count (spot-color entry)))
      and do (decf (aref true-color-count (spot-color entry)))
      finally (progn
-	       (return (list exact-counter (loop for i from 0 to (1- (length *colors*))
+	       (return (list exact-counter (loop for i from 0 to (1- *number-of-colors-initial*)
 					      for guessed = (aref true-color-count i)
 					      for true = (aref guess-color-count i)
 					      when (<= true guessed)
@@ -362,7 +362,7 @@
 	     (setf *weight-b* 2)
 	     (setf *turns-played* 0)
 	     (setf *SCSA-constraints* t)
-	     (setf *number-of-colors-initial* (+ (length *colors*) 1))
+	     (setf *number-of-colors-initial* (length *colors*))
 
 	     ;; Adjust max population size and generations to avoid excessively looping
 	     ;; when not necessary in higher peg/color combos
@@ -386,26 +386,34 @@
 	       ;; color in *colors*
 	       ;; Most effective (does not inflate total guess count unneccesarily) in higher
 	       ;;   peg/color combos
-	       ((and (equal SCSA 'two-color) (>= *board* 12) (>= (length *colors*) 14))
+	       ((and (equal SCSA 'two-color)
+		     (>= *board* 12)
+		     (>= *number-of-colors-initial* 14))
 		(setf guess (make-list *board* :initial-element 'A)))
 
 	       ;; SCSA: TWO-COLOR-ALTERNATING
 	       ;; Initial guess for two-color-alternating SCSA is a solid color guess using the first
 	       ;; color in *colors*
 	       ;; Most effective in higher peg/color combos
-	       ((and (equal SCSA 'two-color-alternating) (>= *board* 12) (>= (length *colors*) 14))
+	       ((and (equal SCSA 'two-color-alternating)
+		     (>= *board* 12)
+		     (>= *number-of-colors-initial* 14))
 		(setf guess (make-list *board* :initial-element 'A)))
 	       
 	       ;; SCSA: USUALLY-FEWER
 	       ;; Initial guess for usually-fewer is a solid color guess using first color in *colors*
 	       ;; Most effective in higher peg/color combos
-	       ((and (equal SCSA 'usually-fewer) (>= *board* 12) (>= (length *colors*) 14))
+	       ((and (equal SCSA 'usually-fewer)
+		     (>= *board* 12)
+		     (>= *number-of-colors-initial* 14))
 		(setf guess (make-list *board* :initial-element 'A)))
 
 	       ;; SCSA: PREFER-FEWER
 	       ;; Initial guess for usually-fewer is a solid color guess using first color in *colors*
 	       ;; Most effective in higher peg/color combo
-	       ((and (equal SCSA 'prefer-fewer) (>= *board* 12) (>= (length *colors*) 14))
+	       ((and (equal SCSA 'prefer-fewer)
+		     (>= *board* 12)
+		     (>= *number-of-colors-initial* 14))
 		(setf guess (make-list *board* :initial-element 'A)))
 
 	       ;; SCSA: MYSTERY-1
@@ -416,26 +424,34 @@
 	       ;; OBSERVABLE: Three colors alternating
 	       ;; Make initial guesses to limit the domain to three colors. Start with first color
 	       ;; in *colors* and make a solid color guess
-	       ((and (equal SCSA 'mystery-2) (>= *board* 12) (>= (length *colors*) 14))
+	       ((and (equal SCSA 'mystery-2)
+		     (>= *board* 12)
+		     (>= *number-of-colors-initial* 14))
 		(setf guess (make-list *board* :initial-element 'A)))
 	       
 	       ;; SCSA: MYSTERY-3
 	       ;; OBSERVABLE: Three colors
 	       ;; Make initial guesses to limit the domain to three colors. Start with first color
 	       ;; in *colors* and use that to make first solid color guess.
-	       ((and (equal SCSA 'mystery-3) (>= *board* 12) (>= (length *colors*) 14))
+	       ((and (equal SCSA 'mystery-3)
+		     (>= *board* 12)
+		     (>= *number-of-colors-initial* 14))
 		(setf guess (make-list *board* :initial-element 'A)))
 	       
 	       ;; SCSA: MYSTERY-4
 	       ;; OBSERVABLE: Four colors
 	       ;; Make initial guesses to limit the domain to four colors. Start with first color
 	       ;; in *colors* and make a solid color guess.
-	       ((and (equal SCSA 'mystery-4) (>= *board* 12) (>= (length *colors*) 14))
+	       ((and (equal SCSA 'mystery-4)
+		     (>= *board* 12)
+		     (>= *number-of-colors-initial* 14))
 		(setf guess (make-list *board* :initial-element 'A)))
 	       
 	       ;; SCSA: MYSTERY-5
 	       ;; OBSERVABLE: two-color-alternating
-	       ((and (equal SCSA 'mystery-5) (>= *board* 12) (>= (length *colors*) 14))
+	       ((and (equal SCSA 'mystery-5)
+		     (>= *board* 12)
+		     (>= *number-of-colors-initial* 14))
 		(setf guess (make-list *board* :initial-element 'A)))
 	       
 	       ;; If SCSA is has not implementation/not needed for board/size combo, return rando
@@ -458,7 +474,7 @@
 	  ;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
 	  ;;              Keep removing until only two colors left.
 	  ((and (>= *board* 12)
-		(>= (length *colors*) 14)
+		(>= *number-of-colors-initial* 14)
 		(equal SCSA 'two-color)
 		(not (eq (length *colors*) 2)))
 	   (progn
@@ -497,7 +513,7 @@
 	  ;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
 	  ;;              Keep removing until only two colors left.
 	  ((and (>= *board* 12)
-		(>= (length *colors*) 14)
+		(>= *number-of-colors-initial* 14)
 		(equal SCSA 'two-color-alternating)
 		(not (eq (length *colors*) 2)))
 	   (progn
@@ -540,7 +556,7 @@
 	  ;;              therefore settle with
 	  ;;              restricted domain of 3 colors.
 	  ((and (>= *board* 12)
-		(>= (length *colors*) 14)
+		(>=  *number-of-colors-initial* 14)
 		(equal SCSA 'usually-fewer)
 		(not (eq (length *colors*) 3)))
 	   (progn
@@ -583,7 +599,7 @@
 	  ;;              therefore settle with 5 or make random guesses until 100 guess limit is
 	  ;;              reached (no auto-disqualify for guess limit)
 	  ((and (>= *board* 12)
-		(>= (length *colors*) 14)
+		(>= *number-of-colors-initial* 14)
 		(equal SCSA 'prefer-fewer)
 		(not (eq (length *colors*) 5)))
 	   (progn
@@ -622,7 +638,7 @@
 	  ;; Constraints: Since the observable pattern is three colors alternating,
 	  ;;              limit the domain (colors) to 3
 	  ((and (>= *board* 12)
-		(>= (length *colors*) 14)
+		(>= *number-of-colors-initial* 14)
 		(equal SCSA 'mystery-2)
 		(not (eq (length *colors*) 3)))
 	   (progn
@@ -662,7 +678,7 @@
 	  ;; Constraints: Since the observable pattern is three colors.
 	  ;;              limit the domain (colors) to 3
 	  ((and (>= *board* 12)
-		(>= (length *colors*) 14)
+		(>=  *number-of-colors-initial* 14)
 		(equal SCSA 'mystery-3)
 		(not (eq (length *colors*) 3)))
 	   (progn
@@ -702,7 +718,7 @@
 	  ;; Constraints: Since the observable pattern is 4 colors,
 	  ;;              limit the domain (colors) to 4
 	  ((and (>= *board* 12)
-		(>= (length *colors*) 14)
+		(>= *number-of-colors-initial* 14)
 		(equal SCSA 'mystery-4)
 		(not (eq (length *colors*) 3)))
 	   (progn
@@ -742,7 +758,7 @@
 	  ;; Constraints: Since the observable pattern is two colors alternating,
 	  ;;              limit the domain (colors) to 2
 	  ((and (>= *board* 12)
-		(>= (length *colors*) 14)
+		(>= *number-of-colors-initial* 14)
 		(equal SCSA 'mystery-5)
 		(not (eq (length *colors*) 3)))
 	   (progn
