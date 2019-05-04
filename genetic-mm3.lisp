@@ -106,7 +106,10 @@
 (defvar *SCSA-constraints*)
 
 (defvar *available-colors*)
+
 (defvar *last-guess*)
+
+(defvar *rapid-guess-colors*) 
 ;; (setf *previous-population* nil)
 ;; (setf *guesses* nil)
 ;; (setf *max-size* 60) ;; Population size, default = 60
@@ -614,6 +617,8 @@
        guess))
     
     ;; After all SCSA conditions are satisfied, move on to genetic algorithm (general player)
+
+    ((> (length colors) 10)
     (T
      (progn
        (let (new-population)
