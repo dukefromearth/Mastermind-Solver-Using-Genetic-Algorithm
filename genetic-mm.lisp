@@ -108,8 +108,6 @@
 
 ;; Generate a population of specified size at random
 (defun initialize-population ()
-  ;; Compiler optimization
-  (declare (optimize (speed 3) (safety 0)))
   (let (population candidate)
     (loop until (= (length population) *population-size*)
        do (setf candidate (create-gene-sequence))
@@ -413,7 +411,9 @@
 	     (cond
 	       ;; SCSA: AB-COLOR
 	       ;; The domain for ab-color is already known. Set colors to (A B)
-	       ((equal SCSA 'ab-color)
+	       ((and (equal SCSA 'ab-color)
+		     (>= *board* 12)
+		     (>= *number-of-colors-initial* 14))
 		(progn
 		  (setf *colors* '(A B))
 		  (setf *SCSA-constraints* nil)
@@ -840,10 +840,8 @@
 		     (setf *previous-population* (initialize-population))
 		     ;; Send guess
 		     guess)
+		   ;; If SCSA contstraints already applied or nut used, preceed to genetic algorithm
 		   (progn
-		     ;; DEBUG
-		     ;;(print last-response)
-		     ;;(format t "~%Score for above guess: ~a~%" last-response)
 
 		     ;; iterate turn counter
 		     (setf *turns-played* (1+ *turns-played*))
