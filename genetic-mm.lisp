@@ -59,19 +59,15 @@
 ;;                            (summation of differences of c and previous guesses on white pegs) +
 ;;                        b * P(i - 1)
 
-;; Global Parameters
-(defparameter *max-size-of-generation* 60)
-(defparameter *elite-percent* .1)
-(defparameter *fitness-weight-a* 1)
-(defparameter *fitness-weight-b* 2)
-
-;; Global Variables
 
 ;; List keeps track of all guesses made
 (defvar *guesses*)
 
 ;; Maximum number of generations run in generation-loop
 (defvar *max-generations*)
+
+;; Maximum size of each generated population
+(defvar *max-size*)
 
 ;; Last generation made in previous turn
 (defvar *previous-population*)
@@ -88,13 +84,26 @@
 ;; Number of pegs used in each guess
 (defvar *board*)
 
+;; weight-a used in fitness function
+(defvar *weight-a*)
+
+;; weight-b used in fitness function
+(defvar *weight-b*)
+
 ;; Number of turns played
 (defvar *turns-played*)
 
+;; Constant for 10% of max-size
+(defvar *10-percent-of-size*)
+
+;; Constant for 90% of max-size
+(defvar *90-percent-of-size*)
+
+;; Constant for 50% of max-size
+(defvar *50-percent-of-size*)
+
 ;; Flag used to signal use of a few initial guesses to satisfy SCSA
 (defvar *SCSA-constraints*)
-
-
 
 
 ;; Generate a population of specified size at random
@@ -175,8 +184,9 @@
   ;; Compiler optimization and type declaration
   (declare (optimize (speed 3) (safety 0)))
   (declare (type list population))
+
   ;; Choose a random candidate from first 50% of the population
-  (nth (random (floor (/ *max-size-of-generation* 2))) population))
+  (nth (random (floor *50-percent-of-size*)) population))
 
 
 ;; Helper function for play-candidate-with-guess
@@ -273,21 +283,22 @@
   (declare (type list candidate))
 
   ;; Calculate the fitness value using the fitness heuristic formula
-  (+ (* *fitness-weight-a* (summate-black-peg-difference candidate))
+  (+ (* *weight-a* (summate-black-peg-difference candidate))
      (summate-white-peg-difference candidate)
-     (* *fitness-weight-b* *board* (1- *turns-played*))))
+     (* *weight-b* *board* (1- *turns-played*))))
 
 
-;; Return list with *elite-percent* of population
-(defun get-elite-population (population)
+;; Return list with elite 10% of population
+(defun get-elite-10-percent (population)
   ;; Compiler optimizations and type declaration
   (declare (optimize (speed 3) (safety 0)))
   (declare (type list population))
+
   ;; Loop through the population until 10% of max-size is allocated
   (let (elite-population counter)
     (setf counter 1)
     ;; Continue looping while ignoring duplicates and already guessed candidates
-    (loop until (= (length elite-population) (* *population-size* *elite-percent*))
+    (loop until (= (length elite-population) *10-percent-of-size*)
        when (and (not (guessed-alreadyp (nth counter population)))
 		 (not (member (second (nth counter population)) elite-population
 			      :test #'equal :key #'second)))
@@ -295,15 +306,16 @@
        do (setf counter (1+ counter))
        finally (return elite-population))))
 
-;; Return list with mated top 50% to form remaining population after elite
-(defun get-mated-population (population)
+;; Return list with mated top 50% to form remaining 90% of population
+(defun get-mated-90-percent (population)
   ;; Compiler optimizations and type declarations
   (declare (optimize (speed 3) (safety 0)))
   (declare (type list population))
+
   ;; Loop through the population, until 90% of the max-size is reached
   (let (offspring mated-population)
     ;; Continues looping while ignoring duplicates and already guessed candidates
-    (loop until (= (length mated-population) (1- (* *population-size* *elite-percent*)))
+    (loop until (= (length mated-population) *90-percent-of-size*)
        ;; Mate two random candidates in the top 50% of the population
        do (setf offspring (mate (random-top-fifty-candidate population)
 				(random-top-fifty-candidate population)))
@@ -335,10 +347,10 @@
     ;; Continually regenerate the population until limit is reached
     (loop for i from 1 to *max-generations*
        do (setf old-generation generation)
-       ;; Add the elite population unmodified to the new population
-       do (setf generation (get-elite-population generation))
-       ;; Get the remaining percent of mated candidates and add to new population
-       do (setf generation (append generation (get-mated-population old-generation)))
+       ;; Add the elite 10% unmodified to the new population
+       do (setf generation (get-elite-10-percent generation))
+       ;; Get the remaining 90% of mated candidates and add to new population
+       do (setf generation (append generation (get-mated-90-percent old-generation)))
        ;; Retrieve the fitness values for every populant
        do (setf generation (return-population-with-fitness generation))
        ;; Sort the list in ascending order (first element has lowest fitness value)
@@ -706,17 +718,23 @@
 	     ;; Initialize and clear main variables
 	     (setf *previous-population* nil)
 	     (setf *guesses* nil)
+	     (setf *max-size* 60) 
+	     (setf *10-percent-of-size* (* 10 (/ *max-size* 100)))
+	     (setf *90-percent-of-size* (* 90 (/ *max-size* 100))) 
+	     (setf *50-percent-of-size* (* 50 (/ *max-size* 100)))
 	     (setf *max-generations* 100)
 	     (setf *population-size* 150)
 	     (setf *colors* colors)
 	     (setf *board* board)
+	     (setf *weight-a* 1)
+	     (setf *weight-b* 2)
 	     (setf *turns-played* 0)
 	     (setf *SCSA-constraints* t)
 	     (setf *number-of-colors-initial* (length *colors*))
 	     ;; Adjust max population size and generations to avoid excessively looping
 	     ;; when not necessary in higher peg/color combos
-	     (cond ((>= 12 *board*) (progn (setf *max-size-of-generation* 30) (setf *max-generations* 40)))
-		   ((>= 10 *board*) (progn (setf *max-size-of-generation* 40) (setf *max-generations* 50)))
+	     (cond ((>= 12 *board*) (progn (setf *max-size* 30) (setf *max-generations* 40)))
+		   ((>= 10 *board*) (progn (setf *max-size* 40) (setf *max-generations* 50)))
 		   (t nil))
 	     (setf guess (initialize-first-guess board colors SCSA))
 	     ;; Record guess
@@ -810,7 +828,6 @@
 		   (progn
 		     (setf *turns-played* (1+ *turns-played*))
 		     (record-pegs-into-last-guess last-response)
-
 		     ;; Set new-population to the resulting population of generation-loop
 		     ;; this population will have been mated the specified number of times
 		     (setf new-population (generation-loop *previous-population*))
