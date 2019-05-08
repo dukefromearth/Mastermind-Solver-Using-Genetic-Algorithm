@@ -565,17 +565,14 @@
 (defun run-usually-fewer (board colors last-response)
   (let (guess)
     (progn
-      ;; If last response was a total of 0, color not present in answer, therefore remove
       (if (and (eq 0 (first last-response))
 	       (eq 0 (second last-response)))
 	  (progn
 	    ;; Remove color
-	    (setf *colors* (remove (first colors) *colors*)))
+	    (setf *colors* (remove (first *colors*) *colors*)))
 	  (progn
-	    ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
-	    ;; and prepare next color to test
-	    ;; Move color to back
-	    (setf *colors* (append *colors* (list (first *colors*))))
+	    ;; Move to back
+	    (setf *colors* (append colors (list (first *colors*))))
 	    (setf *colors* (remove (first *colors*) *colors* :count 1))))
       (record-pegs-into-last-guess last-response)
       ;; Construct next guess
