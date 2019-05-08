@@ -105,6 +105,9 @@
 ;; Flag used to signal use of a few initial guesses to satisfy SCSA
 (defvar *SCSA-constraints*)
 
+;; Used to store remaining colors that haven't been guessed in the "rapid-fire" algorithm
+(defvar *rapid-fire-colors*)
+(defvar *last-guess*)
 
 ;; Generate a population of specified size at random
 (defun initialize-population ()
@@ -341,7 +344,6 @@
   ;; Compiler optimization and type declaration
   (declare (optimize (speed 3) (safety 0)))
   (declare (type list population))
-  
   (let ((generation population)
 	old-generation)
     ;; Continually regenerate the population until limit is reached
@@ -380,6 +382,15 @@
       (push (second last-response) (first *guesses*))
       ;; ... Push black pegs
       (push (first last-response) (first *guesses*)))
+
+;; Used to guess all possible colors in the format (AAA), (BBB), (CCC)
+(defun rapid-fire ()
+  (let (guess)
+    (progn
+      (setf guess (make-list *board* :initial-element (first *rapid-fire-colors*)))
+      (setf *rapid-fire-colors* (rest *rapid-fire-colors*))
+      (setf *last-guess* guess))
+    guess))
 
 ;;------------------------------------------------------
 ;; SCSA check + initialization of first guess
@@ -479,7 +490,6 @@
 	   (setf guess (second (create-gene-sequence)))
 	   (setf *previous-population* (initialize-population))
 	   (setf *SCSA-constraints* nil))))
-    (print guess)
     guess))
 
 ;;------------------------------------------------------
@@ -731,11 +741,15 @@
 	     (setf *turns-played* 0)
 	     (setf *SCSA-constraints* t)
 	     (setf *number-of-colors-initial* (length *colors*))
+	     (setf *rapid-fire-colors* colors)
 	     ;; Adjust max population size and generations to avoid excessively looping
 	     ;; when not necessary in higher peg/color combos
-	     (cond ((>= 12 *board*) (progn (setf *max-size* 30) (setf *max-generations* 40)))
-		   ((>= 10 *board*) (progn (setf *max-size* 40) (setf *max-generations* 50)))
-		   (t nil))
+	     (cond
+	       ((>= *board* 18) (progn (setf *max-size* 40) (setf *max-generations* 10) (setf *population-size* 30)))
+	       ((>= *board* 15) (progn (setf *max-size* 60) (setf *max-generations* 30) (setf *population-size* 40)))
+	       ((>= *board* 12) (progn (setf *max-size* 30) (setf *max-generations* 40) (setf *population-size* 50)))
+	       ((>= *board* 10) (progn (setf *max-size* 40) (setf *max-generations* 50) (setf *population-size* 50)))
+	       (t nil))
 	     (setf guess (initialize-first-guess board colors SCSA))
 	     ;; Record guess
 	     (push (list guess) *guesses*)
@@ -745,7 +759,7 @@
 	  ;;---------------------------------------------------------------
 	  ;; SCSA CONSTRAINT APPLICATION
 	  ;;---------------------------------------------------------------
-	  
+
 	  ;; SCSA: TWO-COLOR
 	  ((and (>= *board* 12)
 		(>= *number-of-colors-initial* 14)
@@ -804,6 +818,13 @@
 		(equal SCSA 'mystery-5)
 		(not (eq (length *colors*) 2)))
 	   (run-mystery-5 *board* *colors* last-response))
+
+	  ;; Guess all colors
+	  ((and (> (+ board (length colors)) 25) *rapid-fire-colors*)
+	   (if (= 0 (+ (first last-response) (second last-response)))
+	       (setf *colors* (remove (first *last-guess*) *colors* :test #'eq)))
+	   (rapid-fire))
+	   
 	  
 	  ;; After all SCSA conditions are satisfied, move on to genetic algorithm (general player)
 	  (T
