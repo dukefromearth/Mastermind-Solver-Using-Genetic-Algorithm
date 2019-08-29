@@ -2,6 +2,16 @@
  
 ##### Genetic Algorithm Based on Eliteness Pseudo Code
 ```
+Pegs    -> pegs
+Xi      -> bulls/black pegs
+Yi      -> cows/white pegs
+Ei      -> population at cycle i
+Êi      -> new population E at cycle i
+c       -> candidate
+h       -> generation counter
+maxgen  -> max loops/ generation cycles
+maxsize -> max size of population
+
 Set i = 1  
 Play fixed initial guess g1:  
 Get response X1 and Y1;  
