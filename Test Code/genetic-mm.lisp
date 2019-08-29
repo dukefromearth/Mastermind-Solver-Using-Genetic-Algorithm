@@ -507,7 +507,8 @@
 	       (eq 0 (second last-response)))
 	  (progn
 	    ;; Remove color
-	    (setf *colors* (remove (first colors) *colors*)))
+	    (setf *colors* (remove (first colors) *colors*))
+	    (print *colors*))
 	  (progn
 	    ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
 	    ;; and prepare next color to test
@@ -516,7 +517,7 @@
 	    (setf *colors* (remove (first *colors*) *colors* :count 1))))
       (record-pegs-into-last-guess last-response)
       ;; Construct and send a solid color guess using current first element of *colors*
-      (setf guess (make-list board :initial-element (first *colors*)))
+      (setf guess (make-list *board* :initial-element (first *colors*)))
       ;; Record guess
       (push (list guess) *guesses*)
       ;; Send guess
@@ -525,11 +526,12 @@
 ;; SCSA: TWO-COLOR-ALTERNATING
 ;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
 ;;              Keep removing until only two colors left.
+
 (defun two-color-helper (colors)
   (loop for i from 1 to *board*
      collect (nth (rem i 2) colors)))
 
-(defun run-two-color-alternating (board colors last-response)
+(defun run-two-color-alternating (*board* *colors* last-response)
   (let (guess)
     (progn
       ;; If last response was a total of 0, color not present in answer, therefore remove
@@ -537,7 +539,7 @@
 	       (eq 0 (second last-response)))
 	  (progn
 	    ;; Remove color
-	    (setf *colors* (remove (first colors) *colors*)))
+	    (setf *colors* (remove (first *colors*) *colors*)))
 	  (progn
 	    ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
 	    ;; and prepare next color to test
@@ -550,7 +552,7 @@
 	  (progn
 	    (setf guess (two-color-helper *colors*))
 	    (setf *colors* (reverse *colors*)))
-	  (setf guess (make-list board :initial-element (first *colors*))))
+	  (setf guess (make-list *board* :initial-element (first *colors*))))
       ;; Record guess
       (push (list guess) *guesses*)
       ;; Send guess
@@ -562,25 +564,29 @@
 ;;              2 colors, the complexity and guesses used raises to pinpoint exact number,
 ;;              therefore settle with
 ;;              restricted domain of 3 colors.
-(defun run-usually-fewer (board colors last-response)
+(defun run-usually-fewer (*board* *colors* last-response)
   (let (guess)
     (progn
+      ;; If last response was a total of 0, color not present in answer, therefore remove
       (if (and (eq 0 (first last-response))
 	       (eq 0 (second last-response)))
 	  (progn
 	    ;; Remove color
 	    (setf *colors* (remove (first *colors*) *colors*)))
 	  (progn
-	    ;; Move to back
-	    (setf *colors* (append colors (list (first *colors*))))
+	    ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
+	    ;; and prepare next color to test
+	    ;; Move color to back
+	    (setf *colors* (append *colors* (list (first *colors*))))
 	    (setf *colors* (remove (first *colors*) *colors* :count 1))))
       (record-pegs-into-last-guess last-response)
       ;; Construct next guess
-      (setf guess (make-list board :initial-element (first *colors*)))
+      (setf guess (make-list *board* :initial-element (first *colors*)))
       ;; Record guess
       (push (list guess) *guesses*)      
       ;; Send guess
-      guess)))
+      guess))
+  )
 
 ;; SCSA: PREFER-FEWER
 ;; Constraints: If last solid color guess returns a (0 0) response, remove it from *colors*.
@@ -588,7 +594,7 @@
 ;;              5 or less, the complexity and guesses used raises to pinpoint exact number,
 ;;              therefore settle with 5 or make random guesses until 100 guess limit is
 ;;              reached (no auto-disqualify for guess limit)
-(defun run-prefer-fewer (board colors last-response)
+(defun run-prefer-fewer (*board* *colors* last-response)
   (let (guess)
     (progn
       (if (and (eq 0 (first last-response))
@@ -598,11 +604,11 @@
 	    (setf *colors* (remove (first *colors*) *colors*)))
 	  (progn
 	    ;; Move to back
-	    (setf *colors* (append colors (list (first *colors*))))
+	    (setf *colors* (append *colors* (list (first *colors*))))
 	    (setf *colors* (remove (first *colors*) *colors* :count 1))))
       (record-pegs-into-last-guess last-response)
       ;; Construct and send a solid color guess using current first element of *colors*
-      (setf guess (make-list board :initial-element (first *colors*)))
+      (setf guess (make-list *board* :initial-element (first *colors*)))
       ;; Record guess
       (push (list guess) *guesses*)
       ;; Send guess
@@ -613,7 +619,7 @@
 ;; SCSA: MYSTERY-2
 ;; Constraints: Since the observable pattern is three colors alternating,
 ;;              limit the domain (colors) to 3
-(defun run-mystery-2 (board colors last-response)
+(defun run-mystery-2 (*board* *colors* last-response)
   (let (guess)
     (progn
       ;; If last response was a total of 0, color not present in answer, therefore remove
@@ -621,7 +627,7 @@
 	       (eq 0 (second last-response)))
 	  (progn
 	    ;; Remove color
-	    (setf *colors* (remove (first colors) *colors*)))
+	    (setf *colors* (remove (first *colors*) *colors*)))
 	  (progn
 	    ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
 	    ;; and prepare next color to test
@@ -630,8 +636,6 @@
 	    (setf *colors* (remove (first *colors*) *colors* :count 1))))
       ;; Retrieve score from previous guesslement (first *colors*)))
       (record-pegs-into-last-guess last-response)
-      ;; Construct and send a solid color guess using current first element of *colors*
-      (setf guess (make-list board :initial-element (first *colors*)))
       ;; Record guess
       (push (list guess) *guesses*)
       ;; Send guess
@@ -641,7 +645,7 @@
 ;; SCSA: MYSTERY-3
 ;; Constraints: Since the observable pattern is three colors.
 ;;              limit the domain (colors) to 3
-(defun run-mystery-3 (board colors last-response)
+(defun run-mystery-3 (*board* *colors* last-response)
   (let (guess)
     (progn
       ;; If last response was a total of 0, color not present in answer, therefore remove
@@ -649,7 +653,7 @@
 	       (eq 0 (second last-response)))
 	  (progn
 	    ;; Remove color
-	    (setf *colors* (remove (first colors) *colors*)))
+	    (setf *colors* (remove (first *colors*) *colors*)))
 	  (progn
 	    ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
 	    ;; and prepare next color to test
@@ -658,7 +662,7 @@
 	    (setf *colors* (remove (first *colors*) *colors* :count 1))))
       (record-pegs-into-last-guess last-response)
       ;; Construct and send a solid color guess using current first element of *colors*
-      (setf guess (make-list board :initial-element (first *colors*)))
+      (setf guess (make-list *board* :initial-element (first *colors*)))
       ;; Record guess
       (push (list guess) *guesses*)
       ;; Send guess
@@ -667,7 +671,7 @@
 ;; SCSA: MYSTERY-4
 ;; Constraints: Since the observable pattern is 4 colors,
 ;;              limit the domain (colors) to 4
-(defun run-mystery-4 (board colors last-response)
+(defun run-mystery-4 (*board* *colors* last-response)
   (let (guess)
     (progn
       ;; If last response was a total of 0, color not present in answer, therefore remove
@@ -675,7 +679,7 @@
 	       (eq 0 (second last-response)))
 	  (progn
 	    ;; Remove color
-	    (setf *colors* (remove (first colors) *colors*)))
+	    (setf *colors* (remove (first *colors*) *colors*)))
 	  (progn
 	    ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
 	    ;; and prepare next color to test
@@ -686,7 +690,7 @@
       ;; DEBUG
       ;;(print *colors*)
       ;; Construct and send a solid color guess using current first element of *colors*
-      (setf guess (make-list board :initial-element (first *colors*)))
+      (setf guess (make-list *board* :initial-element (first *colors*)))
       ;; Record guess
       (push (list guess) *guesses*)
       ;; Send guess
@@ -696,7 +700,7 @@
 ;; SCSA: MYSTERY-5
 ;; Constraints: Since the observable pattern is two colors alternating,
 ;;              limit the domain (colors) to 2
-(defun run-mystery-5 (board colors last-response)
+(defun run-mystery-5 (*board* *colors* last-response)
   (let (guess)
     (progn
       ;; If last response was a total of 0, color not present in answer, therefore remove
@@ -704,7 +708,7 @@
 	       (eq 0 (second last-response)))
 	  (progn
 	    ;; Remove color
-	    (setf *colors* (remove (first colors) *colors*)))
+	    (setf *colors* (remove (first *colors*) *colors*)))
 	  (progn
 	    ;; Otherwise, color is present, move to back of *colors* to avoid deletion,
 	    ;; and prepare next color to test
@@ -712,18 +716,49 @@
 	    (setf *colors* (append *colors* (list (first *colors*))))
 	    (setf *colors* (remove (first *colors*) *colors* :count 1))))
       (record-pegs-into-last-guess last-response)
-
-      (if (= 2 (length *colors*))
-	  (progn
-	    (setf guess (two-color-helper *colors*))
-	    (setf *colors* (reverse *colors*)))
-	  (setf guess (make-list board :initial-element (first *colors*))))
+      ;; Construct and send a solid color guess using current first element of *colors*
+      (setf guess (make-list *board* :initial-element (first *colors*)))
       ;; Record guess
       (push (list guess) *guesses*)
       ;; Send guess
       guess)))
 
+;; Calculate fitness by heuristic, described in comment header
+(defun calculate-similarity (candidate population)
+  (let ((population-without-candidate (remove candidate population :test #'equal))
+	score)
+  (loop for guess in population-without-candidate
+     do (setf score (process-candidate-with-guess candidate guess))
+     sum (+ (first score) (second score)))))
 
+;; Takes in a sorted population and returns the top guesses without fitness scores
+(defun subset-with-top-fitness (population)
+  (let (subpop (first-guess (first population)))
+    (setf subpop (loop for guess in population until (not (= (first first-guess) (first guess)))
+		    collect (second guess)))
+    subpop))
+
+;; Choose best guess from new-population (sceondary heuristic),
+;; plays each a candidate against all others and chooses the candidate
+;; that scores the highest (most similar)
+(defun choose-best-guess (population)
+  (setf population (subset-with-top-fitness population))
+  (if (> (length population) 5)
+      (let ((similarity 0)
+	    (highest-similarity 0)
+	    best-guess)
+					;(format t "~%~%Similarity heuristic:")
+	(loop for candidate in population
+	   do (setf similarity (calculate-similarity candidate population))
+					;do (format t "~%~a : ~a" (second candidate) similarity)
+	   when (> similarity highest-similarity)
+	   do (setf highest-similarity similarity)
+	   and do (setf best-guess candidate)
+	   finally (return  best-guess)))
+      (first population)))
+
+
+       
 
 ;;------------------------------------------------------
 ;; MAIN ROUTINE
@@ -870,8 +905,11 @@
 		     ;;  already duplicate check)
 		     (setf new-population (remove-if #'guessed-alreadyp new-population))
 		     ;; Set guess to the most fit candidate in new-population
-		     (setf guess (second (first new-population)))
+		     (if (> (third last-response) 2)
+		     	 (setf guess (second (first new-population)))
+		     	 (setf guess (choose-best-guess new-population)))
 		     ;; Push guess onto list of previous guesses
+		     ;(setf guess (second (first new-population)))
 		     (push (list guess) *guesses*)
 		     ;; Guess has been chosen, send it to get scored
 		     guess))))))))
